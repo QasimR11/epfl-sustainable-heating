@@ -2,7 +2,7 @@
 
 This report presents a comprehensive analysis of energy optimization strategies for the EPFL campus, encompassing energy demand analysis, heat recovery, heat pump (HP) modeling, and energy system integration.
 
-The study identifies energy demands across campus buildings, emphasizing critical factors such as thermal conductivity (k~th~) and solar gain coefficients (k~sun~). A detailed analysis suggests that targeted renovations, combined with optimized parameters, can reduce overall heating demand by a significant margin.
+The study identifies energy demands across campus buildings, emphasizing critical factors such as thermal conductivity (k<sub>th</sub>) and solar gain coefficients (k<sub>sun</sub>). A detailed analysis suggests that targeted renovations, combined with optimized parameters, can reduce overall heating demand by a significant margin.
 
 Heat recovery systems are analyzed for their ability to reclaim waste heat from campus processes. Preliminary calculations indicate close to 30% reduction in heat load of the campus in selected scenarios, offering substantial opportunities to reduce waste and improve system efficiency.
 
