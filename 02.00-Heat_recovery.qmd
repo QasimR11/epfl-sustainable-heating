@@ -1,0 +1,1022 @@
+# NLP Optimization of Energy Systems {#sec-NLP}
+```{r chunk_settings, echo=F,message = F}
+knitr::opts_chunk$set(echo = F, warning = F, message = F)
+```
+
+```{r global_settings, echo=F, message = F, warning = F}
+library(reticulate)
+if (!requireNamespace("reactable", quietly = TRUE)) { 
+  install.packages("reactable")
+  }
+library(reactable)
+library(htmltools)
+options(reactable.theme = reactableTheme(
+  color = "hsl(233, 9%, 15%)", #text color
+  backgroundColor = "white", 
+  borderColor = "hsl(233, 9%, 85%)",
+  stripedColor = "hsl(210, 100%, 95%)",
+  highlightColor = "hsl(210, 100%, 90%)",
+  inputStyle = list(backgroundColor = "hsl(0, 0%, 96%)"),
+  selectStyle = list(backgroundColor = "hsl(0, 0%, 96%)"),
+  pageButtonHoverStyle = list(backgroundColor = "hsl(233, 9%, 25%)"),
+  pageButtonActiveStyle = list(backgroundColor = "hsl(233, 9%, 28%)"),
+  headerStyle = list(backgroundColor = "hsl(210, 100%, 50%)", color = "white")
+))
+```
+
+## Introduction {#sec-Heat_recovery_intro}
+Heat recovery is an effective strategy to reduce operational costs by capturing and reusing heat from outgoing streams. However, this approach requires additional capital investment for the installation of heat exchangers. The objective of this section is to evaluate the costs of EPFL's current heating system (reference case) and compare them with various heat recovery options. All analyses focus exclusively on medium-temperature buildings. The external environmental conditions used in this study are derived from the clustering method discussed in @sec-TypicalPeriods and are listed in @tbl-typical-periods-kmeans.
+```{r cluster-results, echo = F}
+#| label: tbl-typical-periods-kmeans
+#| tbl-cap: "Typical periods defined using k-means"
+cluster_data <- read.csv('codes_01_energy_demand/kmeans3.csv')
+cluster_data['Irr'] <- cluster_data['Irr']/1000
+reactable(cluster_data, sortable = FALSE, outlined = TRUE,
+  highlight = TRUE,
+  striped = TRUE,
+  columns = list(
+    Unnamed..0 = colDef(name='Cluster No.',align = "center"),
+    Temp = colDef(name = 'Temperature [°C]', align = "center", format = colFormat(digits=2)),
+    Irr = colDef(name = 'Irradiation [kW/m2]',align = "center",  format = colFormat(digits=2)),
+    No_hours = colDef(name = 'Operating hours [h]',align = "center",  format = colFormat(digits=2)),
+    Heating = colDef(name = 'Heat load [kWh]',align = "center",  format = colFormat(digits=2))
+  )
+)
+Duty_year <- sum(unlist(cluster_data['Heating']))
+Hours <- (unlist(cluster_data['No_hours']))
+Hr_year <- Hours[1:4]
+
+```
+
+For all the different cases presented, the following data is used:
+
+-   $\mathrm{T_{int}}$ = 21°C, indoor set temperature in EPFL
+-   $\mathrm{m_{air}}$ = 2.5 $\mathrm{m^3/m^2h}$
+-   $\mathrm{m_{air,out}}$ = 2 $\mathrm{m^3/m^2h}$
+-   $\mathrm{C_{P,air}}$  = 1.152 $\mathrm{kJ/m^3K}$ 
+-   $\mathrm{C_{p,H_2O}}$  = 4.180 $\mathrm{kJ/kg K}$
+-   Overall heat transfer coefficient for the HEX:
+    -   air-air HEX: U = 0.025 $\mathrm{kW/m^2K}$  
+-   $\mathrm{\eta_{carnot}}$ = 0.55, Carnot efficiency of heating heat pumps
+-   $\mathrm{Cel}$ = 0.20 $\mathrm{CHF/kWh}$ , operating cost for buying electricity
+-   $\mathrm{i}$  = 0.06, Interest rate
+-   $\mathrm{n}$  = 20 y, Life-time
+-   $\mathrm{F_{BM,HE}}$ = 4.74, Bare module factor of the heat exchanger
+-   $\mathrm{F_{BM,HP}}$ = 2.0, Bare module factor of the heat pump
+-   $\mathrm{I_{New}}$ = 605.7, Chemical engineering plant cost index (2015)
+-   $\mathrm{I_{Ref}}$ = 394.1, Chemical engineering plant cost index (2000)
+-   $\mathrm{MS_{New}}$ = 562, Marshall and Swift plant cost index (2017)
+-   $\mathrm{MS_{Ref}}$ = 400, Marshall and Swift plant cost index (2000)
+-   $\mathrm{a_{HE}}$ = 1200, Heat exchanger cost parameter
+-   $\mathrm{b_{HE}}$ = 0.6, Heat exchanger cost parameter
+-   $\mathrm{a_{HP}}$ = 3400, Heat pump cost parameter
+-   $\mathrm{b_{HP}}$ = 0.85, Heat pump cost parameter
+
+## Reference case {#sec-Reference}
+For the reference case, the existing heat pumps at EPFL are used to meet the heating demands of medium-temperature buildings by utilizing lake water as a heat source. In this analysis, the operational costs of the current heating system are assessed. Since the heat pumps are already installed, no capital expenditures (CAPEX) are involved, and the total expenditures (TOTEX) are limited to the annual operating costs. The process flow diagram for the reference case is shown in @fig-reference-flowsheet. The flowsheet only shows values for variables which are assumed to remain constant throughout the year.
+
+```{r fig-reference-flowsheet, echo = F, out.width='75%'}
+#| label: fig-reference-flowsheet
+#| fig-cap: "Process flowsheet for reference case. For values of variable dependent on typical periods see [@tbl-Reference-Case-Streams; @tbl-Reference_Case_Units]"
+
+knitr::include_graphics("Figures/Reference-case-Model.png")
+```
+
+### Model equations and constraints {#sec-Eq-Ref}
+The heating requirement of EPFL $\mathrm{Q_{EPFL}}$ are met by the circulation of a heating fluid (EPFLMedium). Energy balance on the heating fluid is given by [eq @eq-Q_EPFL]: 
+$$ 
+\mathrm{Q_{EPFL}}[t] = (\mathrm{M C_{P}})[t](\mathrm{EPFLMediumT} - \mathrm{EPFLMediumOut}) \times \Delta \mathrm{h}[t]
+$$ {#eq-Q_EPFL}
+
+The following nomenclature is used with [eq @eq-Q_EPFL].
+
+- $\mathrm{M}$ is the mass flow rate of heating fluid [$\mathrm{kg\cdot s^{-1}}$].
+- $\mathrm{C_p}$ is the specific heat capacity [$\mathrm{kJ\cdot kg^{-1}\cdot K^{-1}}$].
+- $\Delta h$ is the number of operating hours in a given period [$\mathrm{hr}$].
+- $\mathrm{EPFLMediumT}$ is the supply temperature of heating medium to buildings [$\mathrm{°C}$].
+- $\mathrm{EPFLMediumOut}$ is the return temperature of heating medium from buildings [$\mathrm{°C}$].
+
+Because no information was available on heating fluid the product of specific heat and mass flow are lumped together in the model in a sinlge term. The number of operating hours $\Delta h$ is used in this equation to account for the fact that $\mathrm{Q_{EPFL}}$ is in kWh. The term $[t]$ next to a symbol indicates the quantities that depend on cluster data.
+
+Simialry, energy balance on evaporator and condenser is given by [eq @eq-Q-evap] and [eq @eq-Q-Cond] respectively:
+$$ 
+\mathrm{Q_{evap}}[t] = \mathrm{m_{H_2O}}[t] \mathrm{C_{p,H_2O}} (\mathrm{THPhighin} - \mathrm{THPhighout}) 
+$$ {#eq-Q-evap}
+
+$$ 
+\mathrm{Q_{cond}}[t] = \mathrm{MC_{P}}[t](\mathrm{EPFLMediumT} - \mathrm{EPFLMediumOut}) 
+$$ {#eq-Q-Cond}
+
+where,
+
+  - $\mathrm{Q_{evap}}$ is the duty of evaporator of heat pump [$\mathrm{kW}$].
+  - $\mathrm{Q_{cond}}$ is the duty of condeser of heat pump [$\mathrm{kW}$]. 
+  - $\mathrm{m_{H_2O}}$ is the mass flow rate of lake water flowing into evaporator of heat pump [${kg\cdot s^{-1}}$].
+  - $\mathrm{C_{p,H_2O}}$ is the heat capacity of liquid water defined in @sec-Heat_recovery_intro . 
+  - $\mathrm{THPHighin}$ is the temperature of lake water entering into evaporator [$\mathrm{°C}$].
+  - $\mathrm{THPHighout}$ is the temperature of lake water leaving the evaporator [$\mathrm{°C}$].
+
+As heat pumps transfer energy from low temperature reservoir (lake in this case) to high temperature (buildings here), work needs to be supplied. This work is provided in terms of electrical energy in the compressor and is calculated using [eq @eq-Electricity]
+$$
+\mathrm{E}[t] = \mathrm{Q_{cond}}[t] - \mathrm{Q_{evap}}[t]
+$$ {#eq-Electricity}
+
+Also, the electrical energy requirement is related to coefficient of perfromance of heat pump by [eq @eq-Electricity2]
+$$
+\mathrm{COP}[t] = \frac{\mathrm{Q_cond}[t]}{\mathrm{E}[t]}
+$${#eq-Electricity2}
+
+The coefficient of performance is related to carnott efficieny $\eta_{\mathrm{Carnot}}$ of heat pump by [eq @eq-COP-NLP]
+$$
+\mathrm{COP}[t] = \eta_{\mathrm{Carnot}}\frac{\Delta \mathrm{T_{cond}}}{\Delta \mathrm{T_{cond}}-\Delta \mathrm{T_{evap}}}
+$${#eq-COP-NLP}
+
+where $\Delta \mathrm{T_{cond}}$ and $\Delta \mathrm{T_{evap}}$ are the log mean temperature difference of condenser and evaporator of heat pump and are given by [eq @eq-LMTD-Cond-HP] and [eq @eq-LMTD-Evap-HP] respectively. For these equations, temperature in absolute scale [K] must be used.
+$$
+\Delta \mathrm{T_{cond}} = \frac{(\mathrm{EPFLMediumT} - \mathrm{EPFLMediumOut})}{\ln(\mathrm{EPFLMediumT}) - \ln(\mathrm{EPFLMediumOut})}
+$${#eq-LMTD-Cond-HP}
+
+$$
+\Delta \mathrm{T_{evap}} = \frac{(\mathrm{THPhighin} - \mathrm{THPhighout})}{\ln(\mathrm{THPhighin}) - \ln(\mathrm{THPhighout})}
+$${#eq-LMTD-Evap-HP} 
+
+A constraint is added to the model to ensure that all the heating requirements are provided by condenser ([eq @eq-Constraint-heating-reference])
+$$
+\mathrm{Q_{EPFL}}[t] = \mathrm{Q_{cond}}[t] \times \Delta \mathrm{h}[t]
+$${#eq-Constraint-heating-reference}
+
+The operating cost for the reference case is given by [eq @eq-OPEX-ref-case]
+$$
+\mathrm{OPEX} = \sum_{t=1}^{n}(\mathrm{C_{el}}\times \mathrm{E}[t] \times \Delta \mathrm{h}[t])
+$${#eq-OPEX-ref-case}
+
+where $\mathrm{C_{el}}$ is the cost of electricity, defined in @sec-Heat_recovery_intro. The OPEX is calculated by summing up the cost of electrical energy over all typical periods and is given in $\mathrm{CHF/year}$
+
+### Optimization Results
+```{r Data_reference_case, echo = F}
+pd <- import("pandas") 
+Reference_Case <- pd$read_pickle("codes_02_heat_recovery//results//Reference_Case.pkl")
+# Stream variables
+MassEPFL <- unlist(py_to_r(Reference_Case$MassEPFL))
+Lake_Flow <- unlist(py_to_r(Reference_Case$Flow))
+EPFLMediumT <- unlist(py_to_r(Reference_Case$EPFLMediumT))
+EPFLMediumOut <- unlist(py_to_r(Reference_Case$EPFLMediumOut))
+THP_IN <- unlist(py_to_r(Reference_Case$THPhighin))
+THP_Out <- unlist(py_to_r(Reference_Case$THPhighout))
+# Process Units
+Q_condenser <- unlist(py_to_r(Reference_Case$Qcond))
+Q_evaporator <- unlist(py_to_r(Reference_Case$Qevap))
+Electricity <- unlist(py_to_r(Reference_Case$E))
+COP <- unlist(py_to_r(Reference_Case$COP))
+dTLMCond <- unlist(py_to_r(Reference_Case$TLMCond))
+dTLMEvap <- unlist(py_to_r(Reference_Case$TLMEvapHP))
+QEPFL <- unlist(py_to_r(Reference_Case$Qheating))
+QEPFL_ref <- sum(QEPFL)
+# Costs
+OPEX_Ref <- py_to_r(Reference_Case$OPEX)
+# Stream table
+stream_data_ref <- rbind( c(Lake_Flow), c(MassEPFL))
+# Create repeated Stream and Variable columns 
+Variable <- c( HTML("m<sub>Lake</sub> [kg/s]"), HTML("m<sub>EPFL</sub> [kg/s]"))
+#Variable <- rep(c("Mass Flow [kg/s]", "Temperature [°C]"), times = 4)
+data_table <- data.frame(
+  Variable = Variable,
+  stream_data_ref)
+
+Energy_ref <- sum(Electricity * Hr_year)
+```
+
+The optimal solution for the stream flow rates and temperature is tabulated in @tbl-Reference-Case-Streams for each of the typical periods.
+```{r reference-case-stream-data, echo=F}
+#| label: tbl-Reference-Case-Streams
+#| tbl-cap: "Stream data for reference case for each typical period"
+reactable(data_table,resizable = TRUE, wrap = FALSE,
+  highlight = TRUE,sortable = FALSE,outlined = TRUE,striped = TRUE, 
+  columns = list(
+  Variable = colDef(minWidth = 140, html = TRUE),
+  Flow1 = colDef(name="Cluster 1",format = colFormat(digits=2)),
+  Flow2 = colDef(name='Cluster 2',format = colFormat(digits=2)),
+  Flow3 = colDef(name='Cluster 3',format = colFormat(digits=2)),
+  Flow4 = colDef(name='Cluster 4',format = colFormat(digits=2))
+))
+```
+
+The energy demands for the process i.e. the heat load for condenser and evaporator, and the electrical energy required for compressor as well as the COP for heat pump are listed in @tbl-Reference_Case_Units. 
+```{r reference-case-units, echo = F}
+#| label: tbl-Reference_Case_Units
+#| tbl-cap: "Energy requiremnet and COP of heat pump for reference case for each typical period"
+
+# Unit performance data
+Unit_Name <- c("W-101","W-102","V-101","Heat Pump")
+Variable <- c(HTML("Q<sub>evap</sub> [kW]"),HTML("Q<sub>cond</sub> [kW]"),HTML("E [kW]"),"COP [-]")
+unit_data_ref <- rbind(c(Q_evaporator),c(Q_condenser),c(Electricity),c(COP))
+Ref_table_units <- data.frame(
+  Unit = Unit_Name,
+  Variable = Variable,
+  unit_data_ref)
+
+reactable(Ref_table_units, 
+  wrap = FALSE,
+  resizable = TRUE,
+  highlight = TRUE,
+  sortable = FALSE,
+  outlined = TRUE,
+  striped = TRUE,
+  columns = list(
+    Variable = colDef(html = TRUE),
+    Qevap1 = colDef(name = 'Cluster 1',format = colFormat(digits=2)),
+    Qevap2 = colDef(name = 'Cluster 2',format = colFormat(digits=2)),
+    Qevap3 = colDef(name = 'Cluster 3',format = colFormat(digits=2)),
+    Qevap4 = colDef(name = 'Cluster 4',format = colFormat(digits=2))
+  ))
+```
+
+The log mean temperature differences (LMTD) for the condenser and evaporator in the heat pumps are `r round(dTLMCond[1],2)` K and `r round(dTLMEvap[1],2)` K, respectively. As the stream temperatures shown in @fig-reference-flowsheet remain constant throughout the year, the log temperature differences are uniform across all typical periods.
+
+The annual operating cost (OPEX) for the reference case is `r format(round(OPEX_Ref,0), big.mark = " ", scientific = FALSE)` $\frac{\mathrm{CHF}}{\mathrm{year}}$. This cost is specific to medium-temperature buildings and does not account for the heating requirements of low-temperature buildings.
+
+## Data Center heat recovery
+In this scenario, the heat generated by the EPFL data center is proposed to preheat the EPFLMedium, reducing the energy demand in the condenser. This setup requires the installation of an additional heat exchanger to facilitate heat transfer between the EPFLMedium and the stream leaving the data center. The process flow diagram with associated variables is shown in @fig-flowsheet-datacenter. 
+```{r fig-flowsheet-datacenter, echo = F, out.width='75%'}
+#| label: fig-flowsheet-datacenter
+#| fig-cap: "Process flowsheet for heat recovery from data center. For values of variable dependent on typical periods see [@tbl-Data-center-stream-table; @tbl-Data-center-heat-load]"
+
+knitr::include_graphics("Figures/DataCenter-Model.png")
+```
+
+### Assumptions
+For the modeling of heat recovery from data center following assumptions were made:
+
+  - The exisiting heat exchanger for removing heat from data center can be used to cool down $\mathrm{T_{DC,out}}$ to the required temperature (17 °C).
+  - Heat energy produced by data center is constant throughout the year (574 kW).
+
+### Model equations and constraints
+Energy balance on heat exchanger for heat recovery of data center is given by [eq @eq-HEDC-EB1].
+$$
+\mathrm{Q_{HEDC}}[t] = (\mathrm{M C_{P}})[t](\mathrm{TRadin}[t] - \mathrm{EPFLMediumOut})
+$${#eq-HEDC-EB1}
+
+where,
+
+  - $\mathrm{Q_{HEDC}}$ is the heat recovered in data center recovery heat exchanger (W-103) [$\mathrm{kW}$].
+  - $\mathrm{TRadin}$ is the temperature of heating medium leaving the data center $\mathrm{°C}$
+
+But this heat must equal the amount of heat extracted from hot stream coming from data center given by [eq @eq-HEDC-EB2]
+$$
+\mathrm{Q_{HEDC}}[t] = (\mathrm{m_{DC} c_{P_{DC}}})[t](\mathrm{TDCin} - \mathrm{TDCout}[t]) 
+$${#eq-HEDC-EB2}
+
+where,
+  
+  - $\mathrm{m_{DC}}$ is the mass flow rate of stream coming from data center [$\mathrm{kg \cdot s^{-1}}$]
+  - $\mathrm{c_{P_{DC}}}$ is the heat capacity of data center stream [$\mathrm{kJ\cdot kg^{-1}\cdot K^{-1}}$].
+  - $\mathrm{TDCin}$ is the incoming temperature of data center stream $\mathrm{°C}$.
+  - $\mathrm{TDCout}$ is the outgoing temperature of data center stream $\mathrm{°C}$.
+
+As in the reference case, the mass flow and heat capacity of the streams are lumped into a single parameter for optimization purposes. The heat exchanged in the recovery heat exchanger is modeled as a function of the heat transfer coefficient, the heat transfer area, and the driving force, expressed as:
+$$
+\mathrm{Q_{HEDC}}[t] = \mathrm{U_{HEDC} A_{HEDC} \Delta T_{HEDC}}[t]
+$${#eq-HEDC-Design}
+
+where 
+
+  - $U$ is the heat transfer coefficient of recovery heat exchanger and is $\mathrm{0.15 \ kW \cdot m^{-2} K^{-1}}$.
+  - $A$ is the heat transfer area $\mathrm{m^{2}}$.
+  - $\Delta T_{\text{LMTD}}$ is the log mean temperature difference $\mathrm{K}$.
+
+The above equation, [eq @eq-HEDC-Design], can be rearranged to get the exchanger area as given by [eq @eq-HEDC-Design2]
+$$
+\mathrm{A_{HEDC}} \geq \frac{\mathrm{Q_{HEDC}}[t]}{\mathrm{U_{HEDC} \Delta T_{HEDC}}[t]}
+$${#eq-HEDC-Design2}
+
+The inequality in [eq @eq-HEDC-Design2] ensures that the exchanger area found in optimal solution is for the worst case scenario. The temperature difference $\Delta T_{HEDC}$ is defined using [eq @eq-LMTD-HEDC].
+$$
+\mathrm{\Delta T_{HEDC}} = \frac{(\mathrm{TDCin - TRadin}[t])-(\mathrm{TDCout}[t]-\mathrm{EPFLMediumOut})}{\ln(\mathrm{TDCin - TRadin}[t])-\ln(\mathrm{TDCout}[t]-\mathrm{EPFLMediumOut})}
+$${#eq-LMTD-HEDC}
+
+Heat balance on the existing heat exchanger for removing heat from data center is given by [eq @eq-free-cooling-HEX]:
+$$
+\mathrm{Q_{free}}[t] = (\mathrm{m_{DC} c_{P_{DC}}})[t](\mathrm{TDCout}[t] - \mathrm{Tret})
+$${#eq-free-cooling-HEX}
+
+where,
+
+  - $\mathrm{Q_{free}}$ is the heat removed by the existing data center heat management system $\mathrm{kW}$.
+  - $\mathrm{Tret}$ is the return temperature of data center medium and is fixed at $\mathrm{17 °C}$.
+  
+This heat must be removed by lake water circulating on the other heat side of heat exchanger, given by [eq @eq-free-cooling-HEX2]
+$$
+\mathrm{Q_{free}}[t] = \mathrm{m_{H_2O}}[t] \mathrm{C_{p,H_2O}} (\mathrm{THPhighin} - \mathrm{THPin}[t]) 
+$${#eq-free-cooling-HEX2}
+
+The heat energy removed in recovery heat exchanger and free cooling exchnager must be equal to the total heat removed from data center (574 kW):
+$$
+\mathrm{Q_{DC}} = \mathrm{Q_{HEDC}}[t] + \mathrm{Q_{free}}[t]
+$${#eq-Constraint-DC-heat}
+
+The heat balance for condenser and evaporator are given by [eq @eq-Q-cond-DataCenter] and [eq @eq-Q-evap-DataCenter] respectively. 
+$$
+\mathrm{Q_{cond}}[t] = \mathrm{MC_{P}}[t](\mathrm{EPFLMediumT} - \mathrm{TRadin}[t]) 
+$${#eq-Q-cond-DataCenter} 
+
+$$
+\mathrm{Q_{evap}}[t] = \mathrm{m_{H_2O}}[t] \mathrm{C_{p,H_2O}} (\mathrm{THPin}[t] - \mathrm{THPhighout}) 
+$${#eq-Q-evap-DataCenter}
+
+In contrast to energy balance for the reference case where both temperatures were fixed, here we have one temperature variable in each equation ($\mathrm{TRadin}[t]$ and $\mathrm{THPin}[t]$) which depends on operating condition. 
+
+[Eq @eq-Electricity; eq @eq-Electricity2; eq @eq-COP-NLP] are same for this case, with the only difference being that the $\mathrm{\Delta T}$ are now no longer constant and for this case are defined using [eq @eq-TLMCond-DC] and [eq @eq-TLMEvap-DC].
+$$
+\mathrm{\Delta T_{cond}}[t] = \frac{\mathrm{EPFLMediumT + TRadin}[t]}{2}
+$${#eq-TLMCond-DC}
+
+$$
+\mathrm{\Delta T_{evap}}[t] = \frac{\mathrm{THPhighout + THPin}[t]}{2}
+$${#eq-TLMEvap-DC}
+
+Finally, for the heat recovery case a constraint is defined to ensure that the energy demand of EPFL in each period is met by energy recovered from data center as well as energy from heat pump.
+$$
+\mathrm{Q_{EPFL}}[t] = (\mathrm{Q_{HEDC}}[t]+\mathrm{Q_{cond}}[t]) \mathrm{\Delta h}[t]
+$${#eq-DataCenter-Constraint}
+
+The purchased cost of additional heat exchanger is given by [eq @eq-HE-Cost]
+$$
+\mathrm{C_{HE}} = \mathrm{a_{HE} A_{HEDC}^{b_{HE}}}
+$${#eq-HE-Cost}
+
+The installed cost of heat exchanger taking into account cost indices is given by [eq @eq-HE-Cost-installed]
+$$
+\mathrm{C_i} = \mathrm{C_{HE} F_{BM}}\frac{\mathrm{I_{year,project}}}{\mathrm{I_{year,ref}}}
+$${#eq-HE-Cost-installed}
+
+The parameters to be used in [eq @eq-HE-Cost] and [eq @eq-HE-Cost-installed] are defined in @sec-Heat_recovery_intro. The capital cost (CAPEX) is defined by annualization of installed costs and is given by [eq @eq-Annualized-Cost]:
+$$
+\mathrm{CAPEX} = \mathrm{C_i} \frac{i(i+1)^n}{(i+1)^n-1}
+$${#eq-Annualized-Cost}
+
+
+The objective function, total cost per year, is simply the sum of OPEX and CAPEX:
+$$
+\mathrm{TOTEX} = \mathrm{CAPEX + OPEX}
+$$
+
+where 
+
+  - $\mathrm{i}$ is the interest rate defined in @sec-Heat_recovery_intro.
+  - $\mathrm{CAPEX}$ is the annualized capital investment [$\mathrm{CHF/year}$].
+  - $\mathrm{TOTEX}$ is the total cost per year [$\mathrm{CHF/year}$].
+
+### Optimization results
+```{r Data_Recovery_data_center, echo = F}
+pd <- import("pandas") 
+Data_Center <- pd$read_pickle("codes_02_heat_recovery//results//Data_Center.pkl")
+# Stream variables
+EPFLMediumT <- unlist(py_to_r(Data_Center$EPFLMediumT))- 273.15
+EPFLMediumOut <- unlist(py_to_r(Data_Center$EPFLMediumOut))- 273.15
+TRadin <- unlist(py_to_r(Data_Center$TRadin))-273.15
+TDCin <- unlist(py_to_r(Data_Center$TDCin)) - 273.15
+TDCout <- unlist(py_to_r(Data_Center$TDCout))- 273.15
+Tret <- unlist(py_to_r(Data_Center$Tret))-273.15
+THPhighin <- unlist(py_to_r(Data_Center$THPhighin))-273.15
+THPin <- unlist(py_to_r(Data_Center$THPin))-273.15
+THPout <- unlist(py_to_r(Data_Center$THPhighout))-273.15
+MassEPFL <- unlist(py_to_r(Data_Center$MassEPFL))
+MassDC <- unlist(py_to_r(Data_Center$MassDC))
+Lake_Flow <- unlist(py_to_r(Data_Center$Flow))
+# Process units
+Q_condenser <- unlist(py_to_r(Data_Center$Qcond))
+Q_evaporator <- unlist(py_to_r(Data_Center$Qevap))
+Electricity <- unlist(py_to_r(Data_Center$E))
+COP <- unlist(py_to_r(Data_Center$COP))
+Q_HEDC <- unlist(py_to_r(Data_Center$Qrad))
+Q_Free <- unlist(py_to_r(Data_Center$Qfree))
+TLMcond <- unlist(py_to_r(Data_Center$TLMCond))
+TLMevap <- unlist(py_to_r(Data_Center$TLMEvapHP))
+TLMrad <- unlist(py_to_r(Data_Center$dTLMDC))
+AHEDC <- unlist(py_to_r(Data_Center$AHEDC))
+QEPFL <- unlist(py_to_r(Data_Center$Qheating))
+QEPFL_DC <- sum(QEPFL)
+# Stream table
+#stream_data_DC <- rbind( c(MassEPFL), rep(EPFLMediumT,length(MassEPFL)), c(MassEPFL),rep(EPFLMediumOut,length(MassEPFL)),c(MassEPFL),c(TRadin),c(MassDC),rep(TDCin,length(MassEPFL)),c(MassDC),rep(Tret,length(MassEPFL)),c(MassDC),c(TDCout),c(Lake_Flow), rep(THPhighin, length(Lake_Flow)), c(Lake_Flow), rep(THPout, length(Lake_Flow)),c(Lake_Flow),c(THPin))
+#Stream <- rep(c("EPFLMediumT","EPFLMediumOut","TRadin","TDCin","T_ret","TDCout","THPhighin","THPhighout","THPin"),each=2)
+#Variable <- rep(c("Mass Flow [kg/s]", "Temperature [°C]"), times = nrow(stream_data_DC)/2)
+
+# dTLM table
+Unit_Name <- c("W-101","W-102","W-103")
+unit_data <- rbind(c(TLMevap),c(TLMcond),c(TLMrad))
+LMTD_table_DC <- data.frame(
+  Unit = Unit_Name,
+  unit_data
+)
+# Heat pump table
+Variable <- c("Electricity [kW]","COP [-]")
+unit_data <- rbind(c(Electricity),c(COP))
+Heat_pump_DC <- data.frame(
+  Variable = Variable,
+  unit_data
+)
+# Delta T
+deltaT_min_DC <- min(TDCin - TRadin,TDCout-EPFLMediumOut)
+```
+
+The optimal solution for the stream flow rates and temperature is tabulated in @tbl-Data-center-stream-table for each of the typical periods.
+
+```{r data-center-stream-table, echo=F}
+#| label: tbl-Data-center-stream-table
+#| tbl-cap: "Stream data for heat recovery from data center for each typical period"
+# Stream table
+Variable <- c( HTML("m<sub>Lake</sub> [kg/s]"), HTML("m<sub>EPFL</sub> [kg/s]"),HTML("m<sub>DC</sub> [kg/s]"),HTML("T<sub>HP,in</sub> [°C]"),HTML("T<sub>Rad,in</sub> [°C]"),HTML("T<sub>DC,out</sub> [°C]"))
+stream_data_DC <- rbind( c(Lake_Flow),c(MassEPFL),c(MassDC),c(THPin),c(TRadin),c(TDCout))
+stream_data_dc_table <- data.frame(
+  #Stream = Stream,
+  Variable = Variable,
+  stream_data_DC
+)
+reactable(stream_data_dc_table,resizable = TRUE, 
+  wrap = FALSE, highlight = TRUE,
+  sortable = TRUE,outlined = TRUE,striped = TRUE, 
+  columns = list(
+  Variable = colDef(html = TRUE),
+  Flow1 = colDef(name="Cluster 1",format = colFormat(digits=2)),
+  Flow2 = colDef(name='Cluster 2',format = colFormat(digits=2)),
+  Flow3 = colDef(name='Cluster 3',format = colFormat(digits=2)),
+  Flow4 = colDef(name='Cluster 4',format = colFormat(digits=2))
+)
+)
+```
+
+The heat duty of all the exchangers in flowsheet for each period are given in @tbl-Data-center-heat-load. The temperature difference for each heat exchanger is given in @tbl-Data-center-LMTD
+
+```{r heat-load-DC, echo = F}
+#| label: tbl-Data-center-heat-load
+#| tbl-cap: "Energy requiremnet and COP of heat pump for the case of heat recovery from data center for each typical period"
+
+# Heat load table
+Unit_Name <- c("W-101","W-102","W-103","W-104","V-101","Heat Pump")
+Variable <- c(HTML("Q<sub>evap</sub> [kW]"),HTML("Q<sub>cond</sub> [kW]"),HTML("Q<sub>HEDC</sub> [kW]"),HTML("Q<sub>free</sub> [kW]"),HTML("E [kW]"),"COP [-]")
+unit_data <- rbind(c(Q_evaporator),c(Q_condenser),c(Q_HEDC),c(Q_Free),c(Electricity),c(COP))
+heat_load_table_DC <- data.frame(
+  Unit = Unit_Name,
+  Variable = Variable,
+  unit_data
+)
+reactable(heat_load_table_DC, striped = TRUE,
+  highlight = TRUE, sortable = FALSE,outlined = TRUE,
+  columns = list(
+    Variable = colDef(html = TRUE),
+    Qevap1 = colDef(name='Cluster 1',format = colFormat(digits = 2)),
+    Qevap2 = colDef(name='Cluster 2',format = colFormat(digits = 2)),
+    Qevap3 = colDef(name='Cluster 3',format = colFormat(digits = 2)),
+    Qevap4 = colDef(name='Cluster 4',format = colFormat(digits = 2))
+  )
+)
+```
+
+```{r LMTD-DC, echo = F}
+#| label: tbl-Data-center-LMTD
+#| tbl-cap: "Mean temperature difference [K] for the exchangers in case of heat recovery from data center for each typical period"
+reactable(LMTD_table_DC,striped = TRUE,
+  highlight = TRUE, sortable = FALSE,outlined = TRUE,
+  columns = list(
+    TLMEvapHP1 = colDef(name='Cluster 1', format = colFormat(digits = 2)),
+    TLMEvapHP2 = colDef(name='Cluster 2', format = colFormat(digits = 2)),    
+    TLMEvapHP3 = colDef(name='Cluster 3', format = colFormat(digits = 2)),
+    TLMEvapHP4 = colDef(name='Cluster 4', format = colFormat(digits = 2))
+  ))
+```
+
+```{r Costs-DC,echo=F}
+# Project Costs
+Energy_DC <- Electricity * Hr_year
+Tot_energy_DC <- sum(Energy_DC)
+Savings_DC_energy <- Energy_ref - Tot_energy_DC
+CAPEX_DC <- unlist(py_to_r(Data_Center$CAPEX))
+Interest_Rate <- unlist(py_to_r(Data_Center$i))
+LifeTime <- unlist(py_to_r(Data_Center$n))
+OPEX_DC <- unlist(py_to_r(Data_Center$OPEX))
+TOTEX_DC <- unlist(py_to_r(Data_Center$TC)) 
+Cost_HEDC <- CAPEX_DC*((Interest_Rate+1)^LifeTime - 1)/(Interest_Rate*(Interest_Rate+1)^LifeTime)
+Savings_DC <- OPEX_Ref - OPEX_DC
+Payback <- Cost_HEDC/Savings_DC
+```
+
+Based on the optimum $\mathrm{\Delta T_{min}}$ of `r round(deltaT_min_DC,2)` for recovering heat from data center an additional heat exchanger of an area of `r round(AHEDC,2)` $\mathrm{m^2}$ will be required. The total cost per year (TOTEX) is `r format(round(TOTEX_DC,0), big.mark = " ", scientific = FALSE)` $\frac{\mathrm{CHF}}{\mathrm{year}}$. The breakdown of TOTEX is:
+
+- Annualized capital cost (CAPEX) : `r format(round(CAPEX_DC,0), big.mark = " ", scientific = FALSE)` $\frac{\mathrm{CHF}}{\mathrm{year}}$.
+- Operating cost (OPEX): `r format(round(OPEX_DC,0), big.mark = " ", scientific = FALSE)` $\frac{\mathrm{CHF}}{\mathrm{year}}$.
+
+### Annual savings and payback time
+Heat recovery from data center will result in an energy saving of `r round(Savings_DC_energy/1000,0)` $\frac{\mathrm{MWh}}{\mathrm{year}}$, which translate to annual savings of `r format(round(Savings_DC,0), big.mark = " ", scientific = FALSE)` $\frac{\mathrm{MWh}}{\mathrm{year}}$ in operational costs. 
+
+The payback period for this investment is determined using [eq @eq-Payback]:
+$$
+\mathrm{Payback} = \frac{\mathrm{Initial \ investment}}{\mathrm{Savings\ from\ operational\ costs}}
+$${#eq-Payback}
+
+The initial invetment is calculated using [eq @eq-HE-Cost-installed], and is `r format(round(Cost_HEDC,0), big.mark = " ", scientific = FALSE)` CHF. Thus the payback is:
+$$
+\mathrm{Payback} = \frac{`r round(Cost_HEDC,0)`}{`r round(Savings_DC,0)`} = `r round(Payback,2)` \ \mathrm{years}
+$$
+
+## Air Ventilation Heat Recovery
+A third heat recovery option involves air ventilation, which accounts for the heating demand of each building. In this system, the incoming air ventilation flow (evaluated at ambient temperature $T = T_{\text{ext}}$) is preheated using the outgoing air ventilation flow (at the building’s internal temperature, $T = T_{\text{int}} = 21^\circ \text{C}$). Preheating reduces the heating demand and operating costs, although the addition of a heat exchanger system incurs new investment costs. @fig-ventilation-flowsheet shows the flow diagram for the process of heat recovery from ventilation air.
+```{r fig-ventilation-flowsheet, echo = F, out.width='75%'}
+#| label: fig-ventilation-flowsheet
+#| fig-cap: "Process flowsheet for the case of heat recovery from ventilation air. For values of variable dependent on typical periods see [@tbl-vent-stream-table; @tbl-vent-unit-table]"
+knitr::include_graphics('Figures/Ventilation-Model.png')
+```
+
+The new heat demand can be analytically expressed as:
+$$
+Q(t) = A_{\text{th}} \cdot \left[ U \cdot \left(T_{\text{int}} - T_{\text{ext}}(t)\right) + \dot{m}_{\text{air}} \cdot c_{p,\text{air}} \cdot \left(T_{\text{int}} - T_{\text{new}}(t)\right) - k_{\text{sun}} \cdot \text{Irr}(t) - Q_{\text{people}}(t) \right] - Q_{\text{el}}(t)
+$$
+
+with:
+
+- $U$: Overall heat transfer coefficient of the exchanger ($U_{\text{ex}} = 0.025 \, \text{kW/m}^2 \, \text{K}$)
+
+- $A_{\text{th}}$: Heated area of the building ($\text{m}^2$)
+
+- $T$: Temperature ($^\circ \text{K}$)
+
+- $\dot{m}_{\text{air}}$: Air renewal rate ($\text{m}^3 \, \text{m}^{-2} \, \text{h}^{-1}$)
+
+- $c_{p,\text{air}}$: Air specific heat capacity ($\text{KJ} \, \text{m}^{-3} \, \text{K}^{-1}$)
+
+- $k_{\text{sun}}$: Solar radiation coefficient (dimensionless)
+
+- $\text{Irr}$: Solar irradiation ($\text{W} \, \text{m}^{-2}$)
+
+- $Q_{\text{people}}$: Heating power gained from people ($\text{kW}$)
+
+- $Q_{\text{el}}$: Heating power gained from electrical appliances ($\text{kW}$)
+
+### Assumptions {#sec-Vent-Assumptions}
+In the AMPL model the following assumptions were made. Some of these were done to simplify the model while others were made to accelerate convergence:
+
+ - A single heat exchanger is used for recovering energy of outgoing ventilation air for all the medium temperature buildings. In practice it might not be possible, but for preliminary study it is a suitable simplification by which the model equations are reduced.
+ - The temperature difference of the recovery heat exchanger is modeled using arithemetic mean instead of log mean, as with log mean difficulty with convergence was observed.
+ -  Due to air infiltration, an air mass flow loss of 20% between the air flow entering and exiting EPFL is assumed.
+
+### Model equations and constraints {#sec-Vent-eq}
+The heating demand of building is given by [eq @eq-QEPFL-ventilation].
+$$
+\begin{align} 
+\mathrm{Q_{EPFL,t}}[t] &= \sum_{b=1}^n \mathrm{A_{th}}[b] \big( \mathrm{U_{env}}[b](T_{int} - T_{ext}[t]) +  m_{air}C_{p,air}(T_{int} - T_{ext,new}[t]) \\
+& \quad - k_{sun}[b] \cdot \mathrm{Irr}[t]- Q_{people}[b]  - Q_{el}[b] \big)
+\end{align}
+$${#eq-QEPFL-ventilation}
+
+where, 
+
+  - $\mathrm{A_{th}}$ is the floor area of each building [$\mathrm{m^2}$].
+  - $\mathrm{U_{env}}$ is the overall heat transfer coefficient of building envelope [$\mathrm{kW \cdot m^{-2} \cdot K^{-1}}$].
+  - $\mathrm{T_{int}}$ is the internal temperature of building [$\mathrm{°C}$].
+  - $\mathrm{T_{ext}}$ is the external temperature from clustering data [$\mathrm{°C}$].
+  - $\mathrm{m_{air}}$ is the inlet mass flow rate [$\mathrm{m^3 \cdot m^{-2} s^{-1}}$].
+  - $\mathrm{T_{ext,new}}$ is the temperature of external air after preheating [$\mathrm{°C}$].
+
+$[b]$ indicates parameter unique to each building, n is the number of buildings in the set medium heating demand. 
+
+This heating requirement is provided by condenser of heat pump, [eq @eq-Constraint-heating-reference]. For the heat pump, the model equations are same as those defined in @sec-Reference and are not discussed here.
+<!-- Energy balance on condenser and evaporator is same as for reference case and is given by [eq @#eq-Q-Cond] and [eq @eq-Q-evap] respectively. The temperature difference in condenser and  -->
+
+For the ventilation heat exchanger, energy balance on the two streams is given by [eq @eq-Qventilation-HE1]:
+$$
+\begin{align}
+\mathrm{Q_{W-103}}[t] &= \sum_{b=1}^n \mathrm{m_{air,out}C_{p,air}(T_{int}-T_{release}[t])A_{th}[b]} \\
+& = \sum_{b=1}^n \mathrm{m_{air}C_{p,air}(T_{ext,new}[t] - T_{ext}[t])A_{th}[b]}
+\end{align}
+$${#eq-Qventilation-HE1}
+
+where,
+
+  - $\mathrm{Q_{W-103}}$ is the heat exchanged in the recovery heat exchanger [$\mathrm{kW}$].
+  - $T_{release}$ is the temperature of outgoing air after heat exchange [$\mathrm{°C}$].
+
+The heat exchanger area is given by [eq @eq-Vent-Area]:
+$$
+\mathrm{A_{W-103}} \geq \frac{\mathrm{Q_{W-103}}[t]}{\mathrm{U_{W-103}\Delta T}} 
+$${#eq-Vent-Area}
+
+where,
+
+  -  $\mathrm{A_{W-103}}$ is the area of recovery heat exchanger [$\mathrm{m^2}$].
+  -  $\mathrm{U_{W-103}}$ is the heat transfer coefficient of vent heat exchanger defined in @sec-Heat_recovery_intro.
+  - $\mathrm{\Delta T}$ is the mean temperature difference [$\mathrm{K}$].
+
+The $\geq$ in [eq @eq-Vent-Area] is used to ensure that the exchanger is sized for the worst case scenario. Instead of LMTD, simple artihmetic mean ([eq @eq-DTvent])is used for the ventilation case to converge the model.
+$$
+\mathrm{\Delta T} = \frac{\mathrm{(T_{int}+T_{release}[t])-(T_{ext,new}[t]+T_{ext}[t])}}{2}
+$${#eq-DTvent}
+
+Temperature cross in the exchanger is avoided by constraining temperature difference on both ends using [eq @eq-Temp-cons-1] and [eq @eq-Temp-cons-2]. $\mathrm{\Delta T_{min}}$ of 2°C was used in these equations:
+$$
+ \mathrm{\Delta T_{min}} <= \mathrm{T_{release}[t] - T_{ext}[t]}
+$${#eq-Temp-cons-1}
+
+$$
+\mathrm{\Delta T_{min}} <= \mathrm{T_{int} - T_{ext,new}[t]}
+$${#eq-Temp-cons-2}
+
+The cost for installation of recovery heat exchanger is calculated using [eq @eq-HE-Cost; eq @eq-HE-Cost-installed; eq @eq-Annualized-Cost]. 
+
+### Optimization results
+```{r Data-ventilation-case, echo = F}
+pd <- import("pandas")
+Ventilation <- pd$read_pickle("codes_02_heat_recovery//results//Ventilation.pkl")
+# Stream variables
+m_Lake <- unlist(py_to_r(Ventilation$Flow))
+m_EPFL <- unlist(py_to_r(Ventilation$MassEPFL))
+Trelease <- unlist(py_to_r(Ventilation$Trelease)) - 273.15
+Text <- unlist(py_to_r(Ventilation$Text)) - 273.15
+Text_new <- unlist(py_to_r(Ventilation$Text_new)) - 273.15
+# Unit operations
+Qevap <- unlist(py_to_r(Ventilation$Qevap))
+Qcond <- unlist(py_to_r(Ventilation$Qcond))
+Qvent <- unlist(py_to_r(Ventilation$Heat_Vent))
+E_vent <- unlist(py_to_r(Ventilation$E))
+COP <- unlist(py_to_r(Ventilation$COP))
+Area_Vent <- unlist(py_to_r(Ventilation$Area_Vent))
+Qheating <- unlist(py_to_r(Ventilation$Qheating))
+# MTD
+TLMCond <- unlist(py_to_r(Ventilation$TLMcond))
+TLMEvap <- unlist(py_to_r(Ventilation$TLMevap))
+TLMvent <- unlist(py_to_r(Ventilation$DTLNVent))
+# Costs
+CAPEX_vent <- unlist(py_to_r(Ventilation$CAPEX))
+OPEX_vent <- unlist(py_to_r(Ventilation$OPEX))
+TC_vent <- unlist(py_to_r(Ventilation$TC))
+# Heating demand
+QEPFL <- unlist(py_to_r(Ventilation$Qheating))
+QEPFL_vent <- sum(QEPFL*Hr_year)
+# Delta T min
+deltaT_min_vent <- min(Trelease-Text,21-Text_new)
+```
+
+The optimal solution for the stream flow rates and temperature is tabulated in @tbl-vent-stream-table for each of the typical periods.
+
+```{r stream-table-ventilation, echo = F}
+#| label: tbl-vent-stream-table
+#| tbl-cap: "Stream data for heat recovery from ventilation air for each typical period"
+stream_data_vent <- rbind(c(m_Lake),c(m_EPFL),c(Trelease),c(Text),c(Text_new))
+Variables <- c( HTML("m<sub>Lake</sub> [kg/s]"), HTML("m<sub>EPFL</sub> [kg/s]"), HTML("T<sub>release</sub> [°C]"), HTML("T<sub>ext</sub> [°C]"), HTML("T<sub>ext,new</sub> [°C]"))
+Vent_table_streams <- data.frame(
+  Variable = I(Variables),
+  stream_data_vent
+)
+reactable(Vent_table_streams, resizable = FALSE,
+  wrap = FALSE, sortable = TRUE, outlined = TRUE, striped = TRUE,
+  list(
+    Variable = colDef(html=TRUE),
+    Flow1 = colDef(name = "Cluster 1", format = colFormat(digits = 2)),
+      Flow2 = colDef(name = "Cluster 2", format = colFormat(digits = 2)),
+      Flow3 = colDef(name = "Cluster 3", format = colFormat(digits = 2)),
+      Flow4 = colDef(name = "Cluster 4", format = colFormat(digits = 2))
+      )
+)
+```
+
+The energy required for different unit operation and the coefficient of performance of heat pump is shown in @tbl-vent-unit-table.
+```{r Unit-table-HPvent, echo = F}
+#| label: tbl-vent-unit-table
+#| tbl-cap: "Energy requiremnet and COP of heat pump for the case of heat recovery from ventilation air for each typical period"
+Unit_Name <- c("W-101","W-102","W-103","V-101","Heat Pump")
+Variable <- c(HTML("Q<sub>evap</sub> [kW]"),HTML("Q<sub>cond</sub> [kW]"),HTML("Q<sub>vent</sub> [kW]"),HTML("E [kW]"),"COP [-]")
+duty_data_vent <- rbind(c(Qevap),c(Qcond),c(Qvent),c(E_vent),c(COP))
+unit_table_vent <- data.frame(
+  Unit = Unit_Name,
+  Variable = Variable,
+  duty_data_vent
+)
+reactable(unit_table_vent,resizable = FALSE,
+  wrap = FALSE, sortable = TRUE, outlined = TRUE, striped = TRUE,
+  columns = list(
+    Variable = colDef(html = TRUE),
+    Qevap1 = colDef(name = "Cluster 1", format = colFormat(digits = 2)),
+    Qevap2 = colDef(name = "Cluster 2", format = colFormat(digits = 2)),
+    Qevap3 = colDef(name = "Cluster 3", format = colFormat(digits = 2)),
+    Qevap4 = colDef(name = "Cluster 4", format = colFormat(digits = 2))
+  )
+)
+```
+
+```{r energy-saving-vent, echo = F}
+Energy_vent <- E_vent * Hr_year
+Tot_energy_vent <- sum(Energy_vent)
+Savings_vent <- Energy_ref - Tot_energy_vent
+```
+
+The optimum $\mathrm{\Delta T_{min}}$ is found to be `r round(deltaT_min_vent,2)` °C resulting in a area for recovery heat exchanger of `r round(Area_Vent,2)` $\mathrm{m^2}$. The total costs for the case of heat recovery from ventilation air is `r format(round(TC_vent,0), big.mark = " ", scientific = FALSE)` $\frac{\mathrm{CHF}}{\mathrm{year}}$. The breakdown of TOTEX is:
+
+  - Annualized capital cost (CAPEX) : `r format(round(CAPEX_vent,0), big.mark = " ", scientific = FALSE)` $\frac{\mathrm{CHF}}{\mathrm{year}}$.
+  - Operating cost (OPEX): `r format(round(OPEX_vent,0), big.mark = " ", scientific = FALSE)` $\frac{\mathrm{CHF}}{\mathrm{year}}$.
+
+### Annual savings and payback time
+The addition of recovery heat exchanger will result in an energy saving of `r round(Savings_vent/1000,0)` $\frac{\mathrm{MWh}}{\mathrm{year}}$. Compared to the reference case this results in reduction of operating bill from `r format(round(OPEX_Ref,0), big.mark = " ", scientific = FALSE)` $\frac{\mathrm{CHF}}{\mathrm{year}}$ to `r format(round(OPEX_vent,0), big.mark = " ", scientific = FALSE)` $\frac{\mathrm{CHF}}{\mathrm{year}}$. 
+```{r payback-time, echo = F}
+Cost_HE_vent <- CAPEX_vent*((Interest_Rate+1)^LifeTime - 1)/(Interest_Rate*(Interest_Rate+1)^LifeTime)
+Savings_vent_money <- OPEX_Ref - OPEX_vent
+Payback_vent <- Cost_HE_vent/Savings_vent_money
+```
+
+The initial investment for installation of heat exchanger is calculated using [eq @eq-HE-Cost-installed], and is `r format(round(Cost_HE_vent,0), big.mark = " ", scientific = FALSE)` CHF. Thus the payback is:
+$$
+\mathrm{Payback} = \frac{`r round(Cost_HE_vent,0)`}{`r round(Savings_vent_money,0)`} = `r round(Payback_vent,2)` \ \mathrm{years}
+$$
+
+## Air Ventilation with Heat Pump Integration
+
+The final heat recovery option involves utilizing heat from the air leaving the ventilation system as a heat source for a to-be-installed heat pump evaporator. While this solution also requires additional investment, it enables dual exploitation of ventilation heat—once at $T_{\text{release}}$ and again at $T_{\text{release,2}}$. 
+
+This setup results in a greater heat supply compared to ventilation heat recovery without heat pump integration. Additionally, using the heated heat exchanger outlet stream ($T_{\text{new}} > T_{\text{ext}}$) as the condenser heat source for the heat pump loop enhances system efficiency compared to operating the heat pump in isolation.
+
+This more complex system must be thoroughly assessed to determine whether the significant operational cost reductions can offset the newly added investment costs. The flowsheet for the process is shown in @fig-ventilation-heatpump.
+
+```{r fig-ventilation-heatpump, echo = F, out.width='75%'}
+#| label: fig-ventilation-heatpump
+#| fig-cap: "Process flowsheet for heat recovery from data center. For values of variable dependent on typical periods see [@tbl-HPvent-stream-table; @tbl-HPvent-unit-table]"
+
+knitr::include_graphics("Figures/Ventilation_with_HP-Model.png")
+```
+
+### Assumptions
+For the case of ventilation heat recovery with heat pump integration, in addition to assumptions mentioned in @sec-Vent-Assumptions the following assumptions were made:
+
+  - The carnot efficiency of Air heat pump is assumed to be constant ($\mathrm{\eta_{Air,HP}} = 0.55$).
+  - The mean temperature differenc for condenser and evaporator of air heat pump are modeled as simple arithemetic mean.
+
+### Model equation and constraints
+The equations for existing heat pump and recovery heat exchanger are same as those discussed in @sec-Eq-Ref and @sec-Vent-eq. For the new heat pump condenser and evaporator duty are given by [eq @eq-Q-Cond-HP] and [eq @eq-Q-evap-HP] respectively.
+$$ 
+\mathrm{Q_{cond,2}}[t] = \mathrm{m_{air}[t]C_{p,air}}(\mathrm{T_{Air,in}[t]} - \mathrm{T_{ext,new}[2]}) 
+$$ {#eq-Q-Cond-HP}
+
+$$
+\mathrm{Q_{evap,2}}[t] = \mathrm{m_{air,out}[t]C_{p,air}}(\mathrm{T_{release}[t]} - \mathrm{T_{release,2}[t]})
+$$ {#eq-Q-evap-HP}
+
+Constraints are added on COP of air heat pump to avoid convergence issues and solution that maybe physically infeasible, defined by [eq @eq-COP-cons]
+$$
+\mathrm{3 \leq COP \leq 7}
+$${#eq-COP-cons}
+
+Similar to the case of heat recovery from ventilation air, minimum temperature difference of 2°C is used to avoid temperature cross in the heat exchanger. The electrical energy required for heat pump and the coefficient of performance are calcualted using [eq @eq-Electricity] and [eq @eq-COP-NLP]. 
+
+The cost of additional heat pump is modeled using [eq @eq-HE-Cost; eq @eq-HE-Cost-installed] and [eq @eq-Annualized-Cost]. For the heat pump, inflation is consider using the Marshall and Swift equipment cost indices. 
+
+### Optimization results
+
+```{r Ventilation-with-HP-results, echo = F}
+pd <- import("pandas")
+Ventilation_HP <- pd$read_pickle("codes_02_heat_recovery//results//Ventilation_with_HP.pkl")
+# Stream variables
+m_Lake_ventHP <- unlist(py_to_r(Ventilation_HP$Flow))
+m_EPFL_ventHP <- unlist(py_to_r(Ventilation_HP$MassEPFL))
+Trelease_ventHP <- unlist(py_to_r(Ventilation_HP$Trelease)) -273.15
+Trelease2_ventHP <- unlist(py_to_r(Ventilation_HP$Trelease_2)) - 273.15 
+Text_ventHP <- unlist(py_to_r(Ventilation_HP$Text)) - 273.15
+Text_new_ventHP <- unlist(py_to_r(Ventilation_HP$Text_new)) - 273.15
+Tair_in_ventHP <- unlist(py_to_r(Ventilation_HP$Tair_in)) -273.15 
+# Unit variables
+Qcond_ventHP <- unlist(py_to_r(Ventilation_HP$Qcond))
+Qcond2_ventHP <- unlist(py_to_r(Ventilation_HP$Qcond_2))
+Qevap_ventHP <- unlist(py_to_r(Ventilation_HP$Qevap))
+Qevap2_ventHP <- unlist(py_to_r(Ventilation_HP$Qevap_2))
+Qvent_ventHP <- unlist(py_to_r(Ventilation_HP$Heat_Vent))
+E1_ventHP <- unlist(py_to_r(Ventilation_HP$E))
+E2_ventHP <- unlist(py_to_r(Ventilation_HP$E_2))
+Area_Vent_ventHP <- unlist(py_to_r(Ventilation_HP$Area_Vent))
+TLMcond2_ventHP <- unlist(py_to_r(Ventilation_HP$TLMCond_2))
+TLMevap2_ventHP <- unlist(py_to_r(Ventilation_HP$TLMEvapHP_2))
+TLMvent_ventHP <- unlist(py_to_r(Ventilation_HP$DTLNVent))
+TLMcond_ventHP <- unlist(py_to_r(Ventilation_HP$TLMCond))
+TLMevap_ventHP <- unlist(py_to_r(Ventilation_HP$TLMEvap))
+Qheating_ventHP <- unlist(py_to_r(Ventilation_HP$Qheating))
+
+COP1_ventHP <- unlist(py_to_r(Ventilation_HP$COP))
+COP2_ventHP <- unlist(py_to_r(Ventilation_HP$COP_2))
+# Costs 
+Cost_HP_ventHP <- unlist(py_to_r(Ventilation_HP$Cost_HP))
+Cost_HE_ventHP <- unlist(py_to_r(Ventilation_HP$Cost_HE))
+OPEX_ventHP <- unlist(py_to_r(Ventilation_HP$OPEX))
+CAPEX_ventHP <- unlist(py_to_r(Ventilation_HP$CAPEX))
+TC_ventHP <- unlist(py_to_r(Ventilation_HP$TC))
+#Heating demand
+QEPFL <- unlist(py_to_r(Ventilation_HP$Qheating))
+QEPFL_ventHP <- sum(QEPFL*Hr_year)
+
+deltaT_min1_ventHP <- min(Trelease_ventHP-Text_ventHP,21-Text_new_ventHP)
+```
+
+The optimal solution for stream flow rates and temperature of streams in @fig-ventilation-heatpump are given in @tbl-HPvent-stream-table. 
+```{r Stream-table-ventilation-HP, echo = F}
+#| label: tbl-HPvent-stream-table
+#| tbl-cap: "Stream data for heat recovery from ventilation air with heat pump integration in each typical period"
+stream_data_HPvent <- rbind(c(m_Lake_ventHP),c(m_EPFL_ventHP),c(Trelease_ventHP),c(Trelease2_ventHP),c(Text_ventHP),c(Text_new_ventHP),c(Tair_in_ventHP))
+Variables <- c( HTML("m<sub>Lake</sub> [kg/s]"), HTML("m<sub>EPFL</sub> [kg/s]"), "T<sub>release</sub> [°C]", "T<sub>release2</sub> [°C]", HTML("T<sub>ext</sub> [°C]"), HTML("T<sub>ext,new</sub> [°C]"), HTML("T<sub>air,in</sub> [°C]"))
+HP_vent_table_streams <- data.frame(
+  Variable = I(Variables),
+  stream_data_HPvent
+)
+reactable(HP_vent_table_streams, resizable = FALSE,
+  wrap = FALSE, sortable = TRUE, outlined = TRUE, striped = TRUE, 
+    columns = list(
+      Variable = colDef(html = TRUE),
+      Flow1 = colDef(name = "Cluster 1", format = colFormat(digits = 2)),
+      Flow2 = colDef(name = "Cluster 2", format = colFormat(digits = 2)),
+      Flow3 = colDef(name = "Cluster 3", format = colFormat(digits = 2)),
+      Flow4 = colDef(name = "Cluster 4", format = colFormat(digits = 2))
+      ) 
+)
+```
+
+The energy required for different unit operation and the coefficient of performance of both the existing heat pump and proposed heat pump (air heat pump) is shown in @tbl-HPvent-unit-table.
+```{r Unit-table-HPvent, echo = F}
+#| label: tbl-HPvent-unit-table
+#| tbl-cap: "Energy requirement for process units for each typical period"
+Unit_Name <- c("W-101","W-102","W-103","W-104","W-105","V-101","V-102","Lake heat pump","Air heat pump")
+Variable <- c(HTML("Q<sub>evap</sub> [kW]"),HTML("Q<sub>cond</sub> [kW]"),HTML("Q<sub>vent</sub> [kW]"),HTML("Q<sub>evap,2</sub> [kW]"),HTML("Q<sub>cond,2</sub> [kW]"),HTML("E<sub>1</sub> [kW]"),HTML("E<sub>2</sub> [kW]"),HTML("COP<sub>1</sub> [-]"),HTML("COP<sub>2</sub> [-]"))
+duty_data_ventHP <- rbind(c(Qevap_ventHP),c(Qcond_ventHP),c(Qvent_ventHP),c(Qevap2_ventHP),c(Qcond2_ventHP),c(E1_ventHP),c(E2_ventHP),c(COP1_ventHP),c(COP2_ventHP))
+unit_table_ventHP <- data.frame(
+  Unit = Unit_Name,
+  Variable = Variable,
+  duty_data_ventHP
+)
+reactable(unit_table_ventHP,resizable = FALSE,
+  wrap = FALSE, sortable = TRUE, outlined = TRUE, striped = TRUE,
+  columns = list(
+    Variable = colDef(html = TRUE),
+    Qevap1 = colDef(name = "Cluster 1", format = colFormat(digits = 2)),
+    Qevap2 = colDef(name = "Cluster 2", format = colFormat(digits = 2)),
+    Qevap3 = colDef(name = "Cluster 3", format = colFormat(digits = 2)),
+    Qevap4 = colDef(name = "Cluster 4", format = colFormat(digits = 2))
+  )
+)
+```
+
+@tbl-dT-HPvent lists the mean temperature difference for all the heat exchangers shown in the flowsheet of @fig-ventilation-heatpump. 
+```{r dT-HPvent, echo = F}
+#| label: tbl-dT-HPvent
+#| tbl-cap: "Mean temperature difference [K] for the exchangers for each typical period"
+
+Unit <- c("W-101","W-102","W-103","W-104","W-105")
+MTD <- rbind(c(TLMevap_ventHP),c(TLMcond_ventHP),c(TLMvent_ventHP),c(TLMevap2_ventHP),c(TLMcond2_ventHP))
+MTD_table_HPvent <- data.frame(
+  Unit = Unit,
+  MTD
+)
+reactable(MTD_table_HPvent, resizable = FALSE,
+  wrap = FALSE, sortable = TRUE, outlined = TRUE, striped = TRUE,
+  columns = list(
+    DTLNVent1 = colDef(name = "Cluster 1", format = colFormat(digits = 2)),
+    DTLNVent2 = colDef(name = "Cluster 2", format = colFormat(digits = 2)),
+    DTLNVent3 = colDef(name = "Cluster 3", format = colFormat(digits = 2)),
+    DTLNVent4 = colDef(name = "Cluster 4", format = colFormat(digits = 2))
+    )  
+)
+```
+
+The optimal area for recovery heat exhanger is  `r round(Area_Vent_ventHP,2)` $\mathrm{m^2}$. The total cost for the flowsheet of @fig-ventilation-heatpump is `r format(round(TC_ventHP,0), big.mark = " ", scientific = FALSE)` $\frac{\mathrm{CHF}}{\mathrm{year}}$. The breakdown of TOTEX is:
+
+  - Annualized capital cost (CAPEX) : `r format(round(CAPEX_ventHP,0), big.mark = " ", scientific = FALSE)` $\frac{\mathrm{CHF}}{\mathrm{year}}$.
+  - Operating cost (OPEX): `r format(round(OPEX_ventHP,0), big.mark = " ", scientific = FALSE)` $\frac{\mathrm{CHF}}{\mathrm{year}}$.
+
+### Annual savings and payback time
+```{r energy-saving-ventHP, echo = F}
+Energy_ventHP <- (E1_ventHP+E2_ventHP) * Hr_year
+Tot_energy_ventHP <- sum(Energy_ventHP)
+Savings_ventHP <- Energy_ref - Tot_energy_ventHP
+```
+
+The addition of recovery heat exchanger will result in an energy saving of `r round(Savings_ventHP/1000,0)` $\frac{\mathrm{MWh}}{\mathrm{yr}}$. Compared to the reference case this results in reduction of operating bill from `r format(round(OPEX_Ref,0), big.mark = " ", scientific = FALSE)` $\frac{\mathrm{CHF}}{\mathrm{year}}$ to `r format(round(OPEX_ventHP,0), big.mark = " ", scientific = FALSE)` $\frac{\mathrm{CHF}}{\mathrm{year}}$. 
+```{r payback-time-ventHP, echo = F}
+Investment_ventHP <- Cost_HP_ventHP + Cost_HE_ventHP
+Savings_ventHP_money <- OPEX_Ref - OPEX_ventHP
+Payback_ventHP <- Investment_ventHP/Savings_ventHP_money
+```
+
+The initial investment for installation of heat exchanger is `r format(round(Cost_HE_ventHP,0), big.mark = " ", scientific = FALSE)` CHF and for the heat pump is `r format(round(Cost_HP_ventHP,0), big.mark = " ", scientific = FALSE)` resulting in a total investment of `r format(round(Investment_ventHP,0), big.mark = " ", scientific = FALSE)`. Thus the payback is:
+$$
+\mathrm{Payback} = \frac{\mathrm{`r format(round(Investment_ventHP,0), big.mark = " ", scientific = FALSE)`}}{\mathrm{`r format(round(Savings_ventHP_money,0), big.mark = " ", scientific = FALSE)`}} = `r round(Payback_ventHP,2)` \ \mathrm{years}
+$$
+
+## Summary of optimization study
+The results of NLP optimization of energy system are illustrated in [ @fig-comparison-totex; @fig-comparison-savings]. It is again worth mentioning that these results only consider the medium temperature buildings of the campus. 
+
+Compared to the reference case, all three case studies resulted in lower total yearly costs (TOTEX), as shown in @tbl-summary-table. The lowest TOTEX is achieved with heat recovery from ventilation air, followed by heat recovery from ventilation air with heat pump integration, and then heat recovery from data center. This is also reflected in terms of payback time, where the payback is lowest for the case of heat recovery from ventilation air and highest for the case of heat recovery from data center. 
+
+In terms of electricity consumption, ventilation with heat pump integration is the most efficient scenario, demonstrating the lowest annual electrical energy usage. The table also indicates that heat recovery from ventilation air can significantly reduce heating demands. Specifically, heat recovery with heat pump integration reduces heating demands from `r format(round(QEPFL_ref/1000,0), big.mark = " ", scientific = FALSE)` MWh (no heat recovery) to `r format(round(QEPFL_ventHP/1000,0), big.mark = " ", scientific = FALSE)` MWh (ventilation with heat pump).
+
+```{r summary-table, echo = F}
+#| label: tbl-summary-table
+#| tbl-cap: "Summary of NLP optimization problem"
+
+Summary_TOTEX <- rbind(c(OPEX_Ref),c(TOTEX_DC),c(TC_vent),c(TC_ventHP))
+Summary_Energy <- rbind(c(sum(Energy_ref)),c(sum(Energy_DC)),c(sum(Energy_vent)),c(sum(Energy_ventHP)))
+Summary_heating_demands <- rbind(c(QEPFL_ref),c(QEPFL_DC),c(QEPFL_vent),c(QEPFL_ventHP))
+Payback_summary <- rbind(c("-"),c(Payback),c(Payback_vent),c(Payback_ventHP))
+Summary_df <- data.frame(
+  Case = c("Reference case","Data center","Air ventilation","Air ventilation with HP"),
+  Costs = Summary_TOTEX,
+  Energy = Summary_Energy/1000,
+  Heating = Summary_heating_demands/1000,
+  Payback = Payback_summary
+)
+reactable(Summary_df, resizable = FALSE,
+  sortable = TRUE, outlined = TRUE, striped = TRUE, 
+  columns = list(
+    OPEX = colDef(name = "Total cost [CHF/year]",minWidth = 80,align = "center",format = colFormat(digits = 0)),
+    Energy = colDef(name = "Electricity consumption [MWh/year]",align = "center",format = colFormat(digits = 2)),
+    Heating = colDef(name = "Heating demand [MWh/year]",minWidth = 110,align = "center", format = colFormat(digits = 2)),
+    OPEX.1 = colDef(name = "Payback Time [years]", align = "center", minWidth = 80,format = colFormat(digits = 2) )
+  ),
+  defaultColDef = colDef(minWidth = 140)
+  )
+```
+
+@tbl-summary-hx shows the heat exchanger specifications and the recovered heat energy for each case. Maximum heat recovery is achieved with ventilation air and heat pump integration, though it requires a large heat exchanger surface area. The data center's heat exchanger is smaller due to the lower available heat energy compared to ventilation air. However, the data center's heat can be used to meet nearby buildings' energy demands, making it a potential energy-saving alternative. 
+```{r summary-hx, echo = F}
+#| label: tbl-summary-hx
+#| tbl-cap: "Heat exchanger specifications for different scenarios"
+
+DT_Min <- rbind(c(deltaT_min_DC),c(deltaT_min_vent),c(deltaT_min1_ventHP))
+Area_HE <- rbind(c(AHEDC),c(Area_Vent),c(Area_Vent_ventHP))
+Heat_rec <- rbind(c(sum(Q_HEDC*Hr_year)),c(sum(Qvent*Hr_year)),c(sum(Qvent_ventHP*Hr_year)))
+hx_summary <- data.frame(
+  Case = c("Data center","Air ventilation","Air ventilation with HP"),
+  MinT = DT_Min,
+  Area = Area_HE,
+  Rec = Heat_rec/1000
+)
+reactable(hx_summary, resizable = FALSE,
+  sortable = TRUE, outlined = TRUE, striped = TRUE, 
+  columns = list(
+    MinT = colDef(name = "&Delta;T<sub>min</sub>", align = "center", html = TRUE, format = colFormat(digits = 2)),
+    AHEDC = colDef(name = "Surface Area [m<sup>2</sup>]", align = "center", html = TRUE, format = colFormat(digits = 2)),
+    Rec = colDef(name = "Heat recovered [MWh/year]", align = "center", html = TRUE, format = colFormat(digits = 2))
+  )
+)
+```
+
+The breakdown of total cost is visualized in @fig-comparison-totex. It is interesting to note that despite having higher TOTEX, the operating costs are lowest for the case of heat recovery from air ventilation with heat pump case. The reason for higher TOTEX, is associated with the higher capital investment (CAPEX) required for installation of heat pump compared to the case where only a heat exchanger is installed to recover heat from ventilation air. 
+
+```{r comparison-totex, echo =F}
+#| label: fig-comparison-totex
+#| fig-cap: "Comparison of TOTEX of different heat recovery options with the current energy system (reference case)"
+library(ggplot2)
+library(plotly, warn.conflicts=FALSE)
+
+Case <- rep(c("C1","C2","C3","C4"), times = 2)
+Value_bar <- unlist(rbind(c(OPEX_Ref),c(OPEX_DC),c(OPEX_vent),c(OPEX_ventHP),c(0),c(CAPEX_DC),c(CAPEX_vent),c(CAPEX_ventHP)))/1000
+Variable <- rep(c("OPEX","CAPEX"),each = 4)
+
+# Plot customization
+CAPEX_text <- unlist(rbind(c(0),c(CAPEX_DC),c(CAPEX_vent),c(CAPEX_ventHP)))
+OPEX_text <- unlist(rbind(c(OPEX_Ref),c(OPEX_DC),c(OPEX_vent),c(OPEX_ventHP)))
+OPEX_text <- paste0("OPEX: ", formatC((OPEX_text), format = "f", digits = 2), " CHF/year")
+CAPEX_text <- paste0("CAPEX: ", formatC((CAPEX_text), format = "f", digits = 2), " CHF/year")
+TOTEX <- unlist(c(OPEX_Ref + 0, OPEX_DC + CAPEX_DC, OPEX_vent + CAPEX_vent, OPEX_ventHP + CAPEX_ventHP))
+TOTEX_text <- paste0("TOTEX: ", formatC(TOTEX, format = "f", digits = 2), " CHF/year")
+#hover_text <- c(OPEX_text, CAPEX_text)
+hover_text <- rep(paste(OPEX_text, CAPEX_text, TOTEX_text, sep = "<br>"), times = 2)
+
+cost_comp <- data.frame(
+  Case <- Case,
+  Variable = Variable,
+  value <- Value_bar,
+  hover <- hover_text
+)
+money_diff <- TC_ventHP - TC_vent
+p <- ggplot(cost_comp, aes(x=Case, y = value, fill = Variable, text = hover)) + 
+  geom_col(width = 0.5) + 
+  scale_x_discrete(labels=c("Reference \n Case","Data \n Center","Air \n Ventilation","Air Ventilation \n with HP")) + 
+  xlab("") + ylab("TOTEX [kCHF/year]") + 
+  theme_grey() +
+  theme(axis.text.x = element_text(hjust=0.5))
+ggplotly(p, tooltip = "text")
+```
+
+@fig-comparison-savings illustrates the impact of various recovery options on energy savings, which in this context refers to the reduction in electrical energy requirements compared to the reference case. Air ventilation with heat pump integration yields the highest energy savings, while the data center offers the least. These energy savings directly influence OPEX, as depicted in @fig-comparison-totex. From a $\mathrm{CO}_2$ emissions perspective, air ventilation with heat pump integration stands out as the most effective solution for minimizing the environmental impact of the heating system. 
+```{r comparison-savings, echo = F}
+#| label: fig-comparison-savings
+#| fig-cap: "Comparison of electrical energy saved in each of the three scenarios"
+library(viridis)
+Case <- c("C1","C2","C3")
+Value_bar <- rbind(c(Savings_DC_energy),c(Savings_vent),c(Savings_ventHP))/1000
+hover_text <- paste0("Energy : ", formatC(unlist(Value_bar)), " [MWh/year]")
+# Data frame
+savings_comp <- data.frame(
+  Case <-  Case,
+  value <- Value_bar,
+  hover <- hover_text
+)
+
+p <- ggplot(savings_comp, aes(x = Case, y = value, fill = value, text = hover)) +
+  geom_col(width = 0.5) +
+  scale_x_discrete(labels=c("Data \n Center","Air \n Ventilation","Air Ventilation \n with HP")) +
+  xlab("") + ylab("Energy savings [MWh/year]") + scale_fill_viridis(option = "D", direction = -1, guide = FALSE)
+ggplotly(p, tooltip = "text")
+```
+
+Based on the obtained results, air ventilation with heat pump integration is the preferred technology. Although its TOTEX is slightly higher (`r format(round(money_diff,0), big.mark = " ", scientific = FALSE)` CHF/year), compared to the case of heat recovery from ventilation air, the heat pump integration leads to higher energy savings and consequently lower $\mathrm{CO}_2$ emissions. Additionally, the long-term benefits of reduced carbon footprint and enhanced energy efficiency make this technology a more sustainable and environmentally friendly choice.

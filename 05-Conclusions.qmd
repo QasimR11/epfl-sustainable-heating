@@ -1,0 +1,18 @@
+# Conclusions
+
+From all the analysis conducted in the span of this project the following recommondations can be made for the heat supply of the EPFL campus. 
+
+In general it is recommendable to renovate the existing buildings of the campus to reduce the energy consumption of the EPFL campus. It is therefore recommended to lower the thermal transmittance $k_{th}$ through additional or improved insulation, upgrade windows, and minimizing thermal bridges. Increasing $k_{sun}$, by optimizing window placement and improving solar transmittance, enhances passive solar gains and reduces heating demand. For most of the buildings the window placement is fixed, so solar transmittance will be the main way to improve $k_{sun}$. It is recommended to be careful in trying to increase $k_{sun}$ too much due to the danger of overheating during summer. 
+Additionally, adjusting the indoor temperature within an optimal range for occupant comfort and performance (21–22°C) can provide a balance between energy efficiency and functional work environments. Lower indoor temperatures, when feasible, offer substantial energy savings.
+
+
+The clustering method using the k-means algorithm with $k = 3$, was used when analysing the different heat recovery possibilities for the campus. Among the evaluated scenarios, air ventilation with heat pump integration emerged as the preferred solution. Although it has slightly higher total expenditures, compared to the case of heat recovery from ventilation air, the heat pump integration leads to higher energy savings and consequently lower $\mathrm{CO}_2$ emissions. Additionally, the long-term benefits of reduced carbon footprint and enhanced energy efficiency make this technology a more sustainable and environmentally friendly choice.
+
+For different scenarios the optimal combination of utilities has been given by the MILP optimisatioin model. Based on EPFL's budget and future incomes, the most realistic scenario must be chosen. If the budget for the coming year is restricted, the scenario where the OPEX is minimized is the most realistic. In this case, most of the heat will be provided by a boiler. If EPFL choses that the climate is the most important aspect, then an electric boiler and other technologies like SOFC and PV panels will be utilisied. The solution for this scenario is very expensive and an investment of such an order is highly unrealistic. Other ways for improving the environmetal footprint like Carbon capturing should therefore be considered. Finally, if EPFL has a restricted budget for investing in new technologies then lower-cost technologies like a boiler or a cogeneration engine and an electrical boiler will be implemented. 
+
+The key recommendations are the following: 
+
+    - Renovate the existing buildings
+    - Install heat recovery for air ventilation with heat pump integration
+    - Use R-290 as a working fluid for the two-stage heat pump
+    - Install the technologies based on the preferred scenario

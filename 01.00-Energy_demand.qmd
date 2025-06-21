@@ -1,0 +1,633 @@
+---
+title: "Energy demand of the EPFL campus"
+editor: visual
+---
+
+<!-- ```{r, echo = F, message = FALSE, warning = F}
+library(rosmose)
+``` -->
+
+```{r, eval=F, echo = F, message = F, warning = F}
+library(reticulate)
+py_install("seaborn")
+```
+
+```{r chunk_settings, echo=F,message = F}
+knitr::opts_chunk$set(echo = F, warning = F, message = F)
+```
+
+```{r global_settings, echo=F, message = F, warning = F}
+library(reticulate)
+if (!requireNamespace("reactable", quietly = TRUE)) { 
+  install.packages("reactable")
+  }
+library(reactable)
+library(htmltools)
+library(ggplot2)
+library(plotly)
+options(reactable.theme = reactableTheme(
+  color = "hsl(233, 9%, 15%)", #text color
+  backgroundColor = "white", 
+  borderColor = "hsl(233, 9%, 85%)",
+  stripedColor = "hsl(210, 100%, 95%)",
+  highlightColor = "hsl(210, 100%, 90%)",
+  inputStyle = list(backgroundColor = "hsl(0, 0%, 96%)"),
+  selectStyle = list(backgroundColor = "hsl(0, 0%, 96%)"),
+  pageButtonHoverStyle = list(backgroundColor = "hsl(233, 9%, 25%)"),
+  pageButtonActiveStyle = list(backgroundColor = "hsl(233, 9%, 28%)"),
+  headerStyle = list(backgroundColor = "hsl(210, 100%, 50%)", color = "white")
+))
+```
+
+## Introduction
+
+The main objective of this part of the project is to **analyze the energy demands of the EPFL campus**. This requires consideration of several aspects of each building on-site, which can be categorized into two groups: heating gains and losses, and design characteristics. A thorough analysis of the latter is essential for accurately determining the energy required throughout the year to maintain an appropriate level of thermal comfort. The first group evaluates the hourly thermal gains from occupants, based on building occupancy profiles, as well as from electronic appliances and solar radiation. The second group estimates the thermal properties of the buildings by examining the annual heating demand.
+
+Once these parameters are defined, the hourly heating demand for each building can be calculated for the entire year using the following equation:
+
+$$
+\begin{align}
+& \mathrm{\dot{Q}_{th}(t) = A_{th} \cdot (k_th \cdot (T_{int}~ − T{ext}(t)) − k_{sun}\cdot \dot{i}(t) − \dot{q}_{people}(t)) − f_{el} \cdot \dot{Q}_{el}(t)} \\
+& \quad \mathrm{If \ \dot{Q}_{th}(t) \leq 0 \ , \ cooling} \\
+& \quad \mathrm{If \ \dot{Q}_{th}(t) \geq 0 \ , \ heating}
+\end{align}
+$$ {#eq-Heating}
+
+where,
+
+-   $\mathrm{A_{th}}$ : reference heated surface $[m^2]$
+-   $\mathrm{k_{th}}$ : thermal losses and ventilation coefficient in $[\mathrm{W/(m^2 \ K)}]$
+-   $\mathrm{T_{int}}$ : internal set point temperature equal to 21 $\mathrm{[◦C]}$
+-   $\mathrm{T{ext}(t)}$ : external ambient temperature $\mathrm{[◦C]}$
+-   $\mathrm{k_{sun}}$ : solar radiation coefficient $\mathrm{[-]}$; takes into account the shape of the building (i.e. ratio between envelope and heated surface), the fraction of window surface and the transmittance of glass
+-   $\mathrm{\dot{i}(t)}$ : solar global radiation per area $\mathrm{[W/(m^2)]}$
+-   $\mathrm{\dot{q}_{people}(t)}$ : heat gain due to the presence of people per unit of area $\mathrm{[W/(m^2)]}$
+-   $\mathrm{f_{el}}$ : share of electricity demand which is converted to heat appliances \[-\]; assumed equal to 0.8 based on the SIA regulations
+-   $\mathrm{\dot{Q}_{el}(t)}$ : electricity demand \[W\]
+
+At the end of this first part, a clustering method is applied to outline the yearly demand over a typical period carefully defined. This method allows to reduce the number of data points, thus reducing the computational costs and time.
+
+```{python package, echo=F, results='hide'}
+import codes_01_energy_demand.NR_functions as fct1
+weather, buildings = fct1.load_data_weather_buildings()
+```
+
+
+@tbl-building-data shows the data for EPFL buildings. In this table, the buildings are divided into two groups based on construction years: Group 1 and Group 2. This classification corresponds to two construction periods, where Group 1 represents buildings with medium temperature demand (65 °C), also referred to as the medium temperature loop, and Group 2 represents buildings with low temperature demand (50 °C).
+
+```{r building-data, echo=F}
+#| label: tbl-building-data
+#| tbl-cap: "Data for EPFL buildings"
+
+# Load required libraries
+library(readr)
+library(reactable)
+
+# Load the data from CSV
+data <- read_csv("codes_01_energy_demand/Buildings.csv")
+
+# Rename columns
+colnames(data) <- c("Building", "Construction Period", "Ground Area [m²]", "Heat Demand [W]", "Electricity Demand [W]")
+# Render the table with reactable
+reactable(
+  data,
+  resizable = TRUE,
+  highlight = TRUE,
+  sortable = FALSE,
+  outlined = TRUE,
+  striped = TRUE,
+  searchable = TRUE,
+  columns = list(
+    Building = colDef(name = "Building", minWidth = 120, html = TRUE),  # Fixed this line
+    `Construction Period` = colDef(name = "Construction Period", minWidth = 120),
+    `Ground Area [m²]` = colDef(
+      name = "Ground Area (m²)", 
+      minWidth = 140, 
+      format = colFormat(digits = 2, separators = TRUE)
+    ),
+    `Heat Demand [W]` = colDef(
+      name = "Heat Demand (W)", 
+      minWidth = 140, 
+      format = colFormat(digits = 0, separators = TRUE)
+    ),
+    `Electricity Demand [W]` = colDef(
+      name = "Electricity Demand (W)", 
+      minWidth = 160, 
+      format = colFormat(digits = 0, separators = TRUE)
+    )
+  )
+)
+
+```
+
+## Calculation of the internal heat gains
+
+First, the thermal gains from people, appliances and solar radiation need to be determined in order to understand better the heat demand on the campus. A few assumptions are made along the process in order to simplify the EPFL consumption model. The thermal gains from the people are estimated considering an averaged daily occupancy profile over the whole year.
+
+```{r Occupancy-profile, echo = F, out.width = '80%'}
+#| label: fig-occupancy
+#| fig-cap: "Daily occupancy profile for the calculation of heat load"
+
+knitr::include_graphics("Figures/Occupancy.png")
+```
+
+As seen on @fig-occupancy, the rates of occupancy per building are structured into three sectors: Office, Canteen and Classroom. As defined in the @tbl-occupancy-pars, each sector is characterized by an averaged heat gain (W/m^2^) value and an area ratio of the buildings.
+
+```{R occupancy-pars-tbl, echo = F}
+#| label: tbl-occupancy-pars
+#| tbl-cap: "Parameters per sector of the buildings"
+
+# Load required libraries
+library(reactable)
+library(tibble)
+
+# Create the data frame with the provided data
+usage_data <- tibble::tibble(
+  Usage = c("Office", "Canteen", "Classroom", "Other"),
+  Heat_Gain = c(5, 35, 23.3, 0),  # Heat gain values
+  Shared_Area = c(0.3, 0.05, 0.35, 0.3)  # Shared area values
+)
+
+# Render the table with reactable
+reactable(
+  usage_data,
+  resizable = TRUE,
+  wrap = FALSE,
+  highlight = TRUE,
+  sortable = FALSE,
+  outlined = TRUE,
+  striped = TRUE,
+  columns = list(
+    Usage = colDef(name = "Usage", minWidth = 140, html = TRUE),
+    Heat_Gain = colDef(
+      name = "Heat Gain [W]", 
+      minWidth = 140, 
+      format = colFormat(digits = 1, separators = TRUE)
+    ),
+    Shared_Area = colDef(
+      name = "Shared Area [m²]", 
+      minWidth = 140, 
+      format = colFormat(digits = 2, separators = TRUE)
+    )
+  )
+)
+```
+
+### Internal gains - People
+
+Hence, the hourly heat loads from the people per building can be computed as the sum of the hourly heat loads from each three sectors per building, according to [eq @eq-People-gain]:
+
+$$
+\mathrm{\dot{q}_{people} = \sum_{i} \dot{q}_{i} \times S_{i} \times \Omega_{i}}
+$$ {#eq-People-gain}
+
+where,
+
+-   $\mathrm{\dot{q}_{i}}$ : heat gain per sector i $\mathrm{W}$
+-   $\mathrm{S_{i}}$ : the share $\mathrm{A_{i}/A_{th}}$ with $\mathrm{A_{th}}$ being the total heated area per building $\mathrm{[m^2]}$
+-   $\mathrm{\Omega_{i}}$ : the occupancy rate per hour $\mathrm{[\%]}$
+
+The occupancy of the building is assumed to be the same each day throughout the year. @fig-heat-gain-people shows the heat gain from people on a typical day.
+
+```{r heat-gain-people, echo = F}
+#| label: fig-heat-gain-people
+#| fig-cap: "Heat gains from people during typical day"
+
+knitr::include_graphics("Figures/Peoplegains.png")
+```
+
+### Internal gains - Electronic appliances
+
+The thermal gain per building from the appliances and lights is computed by assuming that the latest are only switched on from Mondays to Fridays and between 7am and 9pm. Knowing the daily demand of electricity per building over the year, it is also assumed that it follows a uniform distribution over the operating hours. Thus, the heat from appliances per building is given by [eq @eq-electronic-appliances]
+
+$$
+\mathrm{\dot{Q}_{appl} = f_{el} \times \dot{Q}_{el}}
+$$ {#eq-electronic-appliances}
+
+where f~el~ is the share of electricity demand which is converted to heat appliances, for the study it is assumed to be equal to 0.8. The electricity consumption profile for one of the buildings of the campus is shown in @fig-elec-appl.
+
+```{r elec-apply, echo = F}
+#| label: fig-elec-appl
+#| fig-cap: "Hourly electrical energy consumption for MA building"
+
+knitr::include_graphics("Figures/Applusage.png")
+```
+
+## Thermal properties of the building (k<sub>th</sub> and k<sub>sun</sub>)
+
+A main element of the heating demand lies in the thermal characteristics of the buildings described with the heat transfer coefficients k~th~ and k~sun~. While the former quantifies the thermal losses from the building envelope and the ventilation system, the latter quantifies the thermal gains by solar radiation.
+
+$$
+k_{\mathrm{th}} = U_{\mathrm{env}} + \dot{m}_{\mathrm{air}} \cdot c_{p,air}
+$$ {#eq-kth}
+
+with $\dot{m}_{\mathrm{air}}$ the exterior air renewal, $c_{p,air}$ the air specific heat capacity and $U_{\mathrm{env}}$ the unknown overall heat transfer coefficient of the building envelope.
+
+### Computation of k<sub>th</sub> and k<sub>sun</sub>
+
+Considering that our problem has two unknowns, two equations are needed to assess these values.
+
+The first equation lies in the yearly heating demand derived from the thermal load calculation. A cut-off temperature for heating is introduced as the heating system is assumed to be required only if the external temperature is below 16°C. $T_{cut}$ is therefor equal to 16°C.
+
+The hourly heat load can be finally expressed as: 
+$$
+Q_{\mathrm{th}}(t) = \Delta t ( A_{\mathrm{th}} \cdot (k_{\mathrm{th}} \cdot (T_{\mathrm{int}} − T_{\mathrm{ext}}(t)) − k_{\mathrm{sun}} \cdot \dot{i}(t) − \dot{q}_{\mathrm{people}}(t) ) − f_{\mathrm{el}} \cdot \dot{Q}_{\mathrm{el}}(t) )
+$$ {#eq-Qth} 
+
+$\forall t$, if $T_{\mathrm{ext}}$ $\leq$ $T_{\text{cut-off}}$.
+
+Ensuring positive heating power values, a non-linear quantity is defined: 
+$$
+Q^+_{\mathrm{th}}(t) = 
+\begin{cases} 
+Q_{\mathrm{th}}(t), & \text{if } Q_{\mathrm{th}}(t) \geq 0 \\ 
+0, & \text{otherwise} 
+\end{cases}
+$$ {#eq-Qth-plus}
+
+This allows the computation of the yearly heating demand merely as the sum over the 8760 hourly entries when the heat system is turned on: 
+$$
+Q^+_{\mathrm{th,year}} = \sum_{t=1}^{N_p} Q^+_{\mathrm{th}}(t)
+$$ {#eq-Qth-plus-year}
+
+The second equation comes from the assumption that the heat load is zero when the external temperature is equal to the cut-off temperature ±1°C. Relying on the mean values for the irradiation, the electricity demand and the heat gain due to people on this defined range, this yields: 
+
+$$
+0 = A_{\mathrm{th}} \cdot (k_{\mathrm{th}} \cdot (T_{\mathrm{int}} - T_{\mathrm{cut}}) − k_{\mathrm{sun}} \cdot \dot{i}_{\text{mean}} − \dot{q}_{\mathrm{people,mean}}) − f_{\mathrm{el}} \cdot \dot{Q}_{\mathrm{el,mean}}
+$$
+
+Hence, 
+$$
+k_{\mathrm{sun}} = \frac{k_{\mathrm{th}} \cdot (T_{\mathrm{int}} - T_{\mathrm{cut}}) - (\dot{q}_{\mathrm{people,mean}} + f_{\mathrm{el}} \cdot \dot{Q}_{\mathrm{el,mean}}) / A_{\mathrm{th}}}{\dot{i}_{\mathrm{mean}}}
+$$ {#eq-ksun}
+
+The resulting equation system is non-linear, which requires a method addressing non-linearities. The chosen method is the Newton-Raphson (NR) method. It aims to solve $f(x) = 0$ using a Taylor development to approximate $f$: 
+$$
+f(x_0 ) + (x^* − x_0 ) \cdot f^′(x_0 ) ≅ f(x^*) = 0
+$$ 
+which yields 
+$$
+x^* = x_0 − \frac{f(x_0 )}{f^′(x_0)}
+$$ 
+
+The algorithm starts with an initial guess of $x^*$ for $n = 0$ and iterates as follows: 
+$$
+x_{n+1} = x_n − \frac{f( x_n )}{f^′ ( x_n )}
+$$ 
+until $f(x_{n+1})$ is deemed sufficiently close to 0, i.e., lower than a convergence criterion $\epsilon$. The function $f$ is formulated as: 
+
+$$
+f = Q^+_{\mathrm{th,year}} − Q_{\mathrm{th}} = 0
+$${#eq-1.7} 
+
+with $x = k_{\mathrm{th}}$ as the variable where $Q^+_{\mathrm{th,year}}$ is the calculated annual heat load, while $Q_{\mathrm{th}}$ is the annual heat load estimated.
+
+To implement the NR method, the following sequence is used:
+
+-   A reference value of 5 W/m²/K is estimated for $k_{\mathrm{th},0}$.
+-   $k_{\mathrm{sun},n}$ is computed with the second equation, using $k_{\mathrm{th},n}$.
+-   The function $f$ is calculated with the two new terms.
+-   $f'$ is evaluated, allowing computation of a new value for $k_{\mathrm{th},n+1}$.
+
+This loop is iterated until the assumed tolerance of $|f(x)|$ $\leq$ $\epsilon$ $= 10^{-6}$ is reached.
+
+The results from these computations are presented for each building in @tbl-building-k-values .
+
+### Results of the NR method computations
+
+The values of $k_{th}$ and $k_{sun}$ calculated using the Newton-Raphson are presented in @tbl-building-k-values for each building.
+
+```{r building-k-values, tidy=TRUE, echo = F}
+#| label: tbl-building-k-values
+#| tbl-cap: "Thermal characteristics of buildings ($k_{th}$ and $k_{sun}$), determined by Newton-Raphson method"
+
+# Load the data from the CSV
+data_df <- read_csv("codes_01_energy_demand/data_MOES_with_labels.csv")
+
+# Select relevant columns for the table
+k_values_df <- data_df[, c("Building", "k_th", "k_sun")]
+
+# Rename columns for clarity and units
+colnames(k_values_df)[2] <- "k_th [kW/m²/K]"  # Rename k_th column
+colnames(k_values_df)[3] <- "k_sun [kW/m²]"  # Rename k_sun column
+
+# Render the table with reactable
+reactable(
+  k_values_df,
+  resizable = TRUE,
+  wrap = FALSE,
+  highlight = TRUE,
+  sortable = FALSE,
+  outlined = TRUE,
+  striped = TRUE,
+  columns = list(
+    Building = colDef(name = "Building", minWidth = 140, html = TRUE),
+    `k_th [kW/m²/K]` = colDef(
+      name = "k<sub>th</sub> [kW/<sup>2</sup>/K]", 
+      minWidth = 140, html = TRUE,
+      format = colFormat(digits = 4, separators = TRUE)
+    ),
+    `k_sun [kW/m²]` = colDef(
+      name = "k<sub>sun</sub> [kW/m<sup>2</sup>]", 
+      minWidth = 140, html = TRUE,
+      format = colFormat(digits = 4, separators = TRUE)
+    )
+  )
+)
+
+```
+
+The hourly heat demand of one of the buildings (MA) for a year using the computations done in the earlier parts is shown in @fig-hourly-heat-demand.
+```{r hourly-heat-demand, echo = F}
+#| label: fig-hourly-heat-demand
+#| fig-cap: "Hourly heat demand for MA building for the entire year"
+
+knitr::include_graphics("Figures/Hourlyheatdemand.png")
+```
+
+## Impact of renovation and indoor temperature
+
+Through the use of k~th~ and k~sun~ one can now look at the effect of the indoor temperature and renovation for the energy consumption of the different buildings.
+
+### Renovation
+
+To be able to see the effect of renovation, an overall heat transfer coefficient U~envelope~ describing the buildings thermal performance has to be calculated. For our case, we wish to have low U~envelope~ values, as it indicates that the building is well insulated and loses little heat to its surroundings, hence reducing the heating demand.
+
+@tbl-renovation contains the data for overall heat transfer coefficient for each building. The overall heat transfer coefficient has been calculated using $U_{\mathrm{envelope}} =  k_{\mathrm{th}} - \dot{m}_{\mathrm{air}} \cdot c_{p,air}$ .
+
+```{r renovation, echo=F, eval = T}
+#| label: tbl-renovation
+#| tbl-cap: "Building heat transfer coefficient"
+
+# Load required libraries
+library(readr)
+library(tibble)
+
+# Load the CSV file
+data <- read_csv("codes_01_energy_demand/calculated_u_values.csv")
+
+# Rename columns for clarity
+colnames(data) <- c("Building", "kth", "Floor Area [m^2]", "Uenvelope")
+
+# Prepare the data for the table
+data_table <- tibble::tibble(
+  Building = data$Building,
+  `kth [kW/m^2K]` = round(data$kth, 4),  # Round kth column to 2 decimal places
+  `Floor Area [m^2]` = data$`Floor Area [m^2]`,  # Format to 2 decimal places
+  `Uenvelope [kW/m^2K]` = round(data$Uenvelope, 2)  # Round Uenvelope column to 2 decimal places
+)
+
+# Render the table with reactable
+reactable(
+  data_table,
+  resizable = TRUE,
+  wrap = FALSE,
+  highlight = TRUE,
+  sortable = FALSE,
+  outlined = TRUE,
+  striped = TRUE,
+  columns = list(
+    Building = colDef(name = "Building", minWidth = 140, html = TRUE),
+    `kth [kW/m^2K]` = colDef(name = "k<sub>th</sub> [kW/<sup>2</sup>/K]", html = TRUE,
+      minWidth = 100,
+      format = colFormat(digits = 4, separators = TRUE)
+    ),
+    `Floor Area [m^2]` = colDef(name = "Floor Area [m<sup>2</sup>]", html = TRUE,
+      minWidth = 140,
+      format = colFormat(digits = 0, separators = TRUE)
+    ),
+    `Uenvelope [kW/m^2K]` = colDef(name = "U<sub>envelope</sub> [kW/<sup>2</sup>/K]", html = TRUE, minWidth = 140,
+    format = colFormat(digits = 2, separators = TRUE)
+    )
+  )
+)
+
+
+```
+
+To reduce the heating demand of a building, one wishes to decrease k~th~ and increase k~sun~. A lower k~th~ results in less heat loss to the sourroundings through the envelope. To decrease this value, adding insulation, upgrading windows and reducing thermal bridges may help. There are some constraints to how low one can get k~th~. If the building is to airtight, one needs to consider mechanical ventilation. Additionally, there is a need for sufficiently good air quality, which needs to be adressed. It is imporant to find the right balance between good indoor air quality and too high air renewal, since air renewal equals increased heat loss.
+
+When it comes to increasing k~sun~, this can be done by having more windows on the southern, eastern and western facade. Given that exisitng buildings are being analysed, another way to increase k~sun~ is by upgrading the windows to newer windows with greater solar transmittance.
+
+It is important to note that k~th~ and k~sun~ are not independent of eachother, as assumed for the following analysis. By changing to newer windows for instance, the k~th~ might decrease at the same time due for instance to a possible reduction of thermal bridges.
+
+@fig-ksun_hourly shows the impact of $\mathrm{k_{sun}}$ on the hourly heating demand. 
+
+```{r ksun_hourly, echo = F, out.width = '100%'}
+#| label: fig-ksun_hourly
+#| fig-cap: "Hourly heat demand for different values of $k_{sun}$"
+
+knitr::include_graphics("Figures/ksun_hourly heating demand.png")
+```
+
+@fig-kth_hourly shows how the change in ventilation coefficient $\mathrm{k_{th}}$ influence the hourly heating demand of the building.
+
+```{r kth_hourly, echo = F, out.width = '100%'}
+#| label: fig-kth_hourly
+#| fig-cap: "Hourly heat demand for different values of $k_{th}$"
+
+knitr::include_graphics("Figures/varying kth.png")
+```
+
+### Indoor temperature
+
+It is known that the indoor temperature has a significant effect on the working performance. Thus, it is important for the university as a place of work, but also as a place of studying, to have an indoor temperature optimizing performance. This temperature is said to be between 21 and 22 degrees Celsius @Vimalanathan2014. For the heating demand, a lower indoor temperature can result in massive savings. The following graph depicts different heating demands for indoor temperatures ranging between 18 and 23 degrees Celsius.
+
+```{r tindoor, echo = F}
+#| label: fig-tindoor
+#| fig-cap: "Hourly heat demand for constant $k_{th}$ and $k_{sun}$ with varying indoor temperatures"
+
+knitr::include_graphics("Figures/tindoor.png")
+```
+
+
+## Typical periods {#sec-TypicalPeriods}
+
+For modeling external conditions, hourly weather data for the entire year is available. However, using this high-resolution data directly poses significant computational challenges due to its size and complexity. A practical alternative is to define typical periods that accurately represent the year while significantly reducing computational demands.
+
+There are multiple approaches to defining typical periods, each with its advantages: while monthly averages divide the year into 12 periods, with each period representing the average conditions of a month, seasonal averages group data based on seasons to reflect seasonal variations in external conditions. Alternatively, one could also use machine learning methods, such as clustering, to identify representative periods based on the similarity of conditions. In clustering-based approaches, typical periods represent averages or centroids of data groups, which may not capture extreme conditions. To account for this, extreme conditions are added as separate clusters for better representation.
+
+In this work, two methods are used to define typical periods: monthly averages and k-means clustering.
+
+### Monthly averages
+
+In the monthly averages approach, the yearly data is first filtered to include only the hours when buildings are in operation. This ensures that periods with heating demands are prioritized. A simple average is then calculated for each month, providing a mean value for temperature and irradiation. These monthly averages serve as typical periods, as shown in @fig-monthly-averages.
+
+```{r read-monthly-averages, echo = F}
+file_path <- "codes_01_energy_demand/Weather_with_monthly_averages.csv"
+weather_data <- read.csv(file_path)
+```
+
+```{r plot-monthly-averages, echo = F, message = F, out.width='85%'}
+#| label: fig-monthly-averages
+#| fig-cap: "Typical periods defined using monthly averages (excluding the time when buildings are not in operation)"
+library(ggplot2)
+library(plotly)
+library(gridExtra)
+library(grid)
+library(viridis)
+
+Month_tag <- (c("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"))
+variable_tag1 <- rep(c("Temperature [°C]"),each=12)
+variable_tag2 <- rep(c("Irradiation[kW/m^2]"),each=12)
+temperature <- unlist(weather_data["Tamb_A"])
+irradiation <- unlist(weather_data["irr_A"])/1000
+plot_data_temp <- data.frame(
+  Months = factor(Month_tag, levels = Month_tag),
+  Variable = variable_tag1,
+  value = temperature
+)
+plot_data_irr <- data.frame(
+  Months = factor(Month_tag, levels = Month_tag),
+  Variable = variable_tag2,
+  value = irradiation
+)
+tp <- ggplot(plot_data_temp, aes(x=Months, y = value, fill=value)) + 
+  geom_bar(stat='identity') + 
+  scale_fill_viridis_c(option = "viridis") + 
+  theme_minimal() + theme(legend.position = "none",
+  axis.text.x = element_blank(),)
+ip <- ggplot(plot_data_irr, aes(x=Months, y = value, fill=value)) + 
+  geom_bar(stat='identity') + 
+  scale_fill_viridis_c(option = "plasma") + 
+  theme_minimal() + theme(legend.position = "none",
+  axis.text.x = element_text(angle = 45, hjust = 1)) 
+#p <- subplot(tp, ip, nrows = 2)
+
+# Convert ggplots to plotly objects 
+tp_plotly <- ggplotly(tp) 
+ip_plotly <- ggplotly(ip) 
+# Combine the plots using subplot and preserve y-axis labels 
+p <- subplot(tp_plotly, ip_plotly, nrows = 2, shareX = TRUE) %>% layout(
+  yaxis = list(title = "Temperature [°C]",titlefont = list(size = 12)), 
+  yaxis2 = list(title = "Irradiation [kW/m<sup>2</sup>]",titlefont = list(size = 12))
+)
+config(p, mathjax = 'cdn')
+```
+
+### Clustering
+
+Clustering is a machine learning technique used to classify data into subsets based on their similarity. It is categorized as unsupervised learning because the algorithm processes data without predefined class labels. Several clustering techniques are available in the literature, including hard k-means, soft k-means, and DBSCAN. For this work, the hard k-means algorithm (hereafter referred to as k-means) is employed.
+
+The k-means algorithm partitions data into a specified number of disjoint, non-hierarchical clusters. It assigns each data point to a cluster such that the distance between the cluster center (centroid) and the data point is minimized. Typically, this distance is measured using the Euclidean norm, resulting in linearly separable clusters. For non-linear boundaries, higher-order norms or kernel-based methods can be employed. In k-means, clusters are non-overlapping, and each cluster contains at least one data point.
+
+The primary advantage of k-means lies in its computational efficiency and guaranteed convergence under standard conditions. However, it has limitations, particularly its sensitivity to the initial guess of centroids. This sensitivity can lead to suboptimal clustering if not carefully addressed.
+
+Before applying the clustering algorithm, the following pre-processing steps are performed to ensure meaningful results:
+
+-   Data filtering - Only hours during which heating is required are retained. This includes weekdays from 7 A.M. to 9 P.M. when the external temperature is below 16°C. Filtering is crucial for this project, as the focus is on periods with heating demands.
+-   Data normalization - Normalization ensures that all attributes, such as temperature and irradiation, have equal weight in the clustering process. This prevents differences in variable magnitudes from disproportionately influencing the results. Normalization is performed using the mapminmax approach (see @eq-mapminmax), with the normalized range set between 0 and 1. This step is essential because the k-means algorithm, relying on the Euclidean norm, is highly sensitive to variations in feature scales. $$
+    y = (y_{\mathrm{max}}-y_{\mathrm{min}}) \frac{x-x_{\mathrm{min}}}{x_{\mathrm{max}}-x_{\mathrm{min}}} + y_{\mathrm{min}}
+    $$ {#eq-mapminmax}
+
+By filtering the data to relevant periods and normalizing it appropriately, the k-means algorithm effectively identifies clusters that represent distinct heating conditions for further analysis.
+
+The **Sci-kit learn** library in Python is used for implementing the k-means algorithm. One critical hyperparameter in k-means is the **number of clusters**, which needs to be carefully selected. To determine the optimal number of clusters, two criteria were employed.
+
+#### Residual Sum of Squares (RSS)
+
+The RSS measures the distance of each data point from its centroid across all clusters:
+
+$$
+RSS = \sum_{k=1}^K \sum_{x\in C_k} |x-\mu^k|^2
+$$ {#eq-RSS}
+
+RSS quantifies how well the clusters represent the data points. However, a limitation of RSS is that it tends to decrease as the number of clusters increases. In fact, RSS reaches zero when the number of clusters equals the number of data points, making it less effective as a sole criterion for determining the optimal number of clusters.
+
+#### Bayesian Information Criterion (BIC)
+
+The BIC evaluates how well the model fits the data while penalizing the addition of parameters:
+
+$$
+\mathrm{BIC} = RSS + KN \ln(M)
+$$
+
+where: - $K$: Number of clusters - $N$: Data dimensionality - $M$: Number of data points. The BIC introduces a penalty term, which ensures that the benefit of increasing the number of clusters must outweigh the additional complexity introduced. This helps avoid overfitting.
+
+#### Determining the Optimal Number of Clusters
+
+To identify the optimal number of clusters, the k-means algorithm was run with varying cluster counts. Since clustering results can be sensitive to the initial guesses for cluster centroids, the random seed generator was fixed to ensure all runs started with the same initial guess.
+
+@fig-kmeans-elbow illustrates the effect of increasing the number of clusters on RSS and BIC. Based on this figure, the optimal number of clusters is determined to be 5 or 6, as increasing the number of clusters beyond this point results in diminishing improvements in RSS and an increase in BIC.
+
+```{r kmeans-elbow, out.width='100%', fig.align='center', fig.cap='Effect of cluster number on performance', echo=F}
+#| label: fig-kmeans-elbow
+knitr::include_graphics('Figures/Elbow.png')
+```
+
+The final clustering results are shown in @fig-clustering-results. The figure depicts the typical periods identified using the k-means algorithm with $k = 3$, including data only for periods when the buildings are in operation (weekdays from 07:00 to 21:00) and heating is required (temperature $< 16^\circ \text{C}$).
+
+```{r clustering-results, echo=F, fig.cap= 'Typical periods defined using k-means'}
+#| label: fig-clustering-results
+#| fig-cap: "Typical periods defined using k-means algorithm with k = 3. Includes only data for the period when buildings are in operation (weekdays 07.00-21.00) and when heating is required (Temperature < 16°C) "
+
+library(ggplot2)
+library(plotly, warn.conflicts=FALSE)
+library(viridis)
+
+# Import results from csv file
+Centroids <- read.csv("codes_01_energy_demand/kmeans.csv")
+Data_Type_A <- read.csv("codes_01_energy_demand/Data_TypeA.csv")
+
+num_vals = nrow(Centroids)
+col_pal = viridis(num_vals)
+
+# Convert from W to kW
+Centroids$Irr <- Centroids$Irr/1000
+Data_Type_A$Irr <- Data_Type_A$Irr/1000
+
+# Apply labels to Centroids 
+custom_labels <- factor(paste0("C", seq(1, 4))) 
+Centroids$labels <- custom_labels[1:nrow(Centroids)]
+Centroids$custom_labels <- paste0( "T<sub>ext</sub>(t): ", formatC(Centroids$Temp, format = "f", digits = 3), " °C\n", "i: ", formatC(Centroids$Irr, format = "f", digits = 3), " kW/m<sup>2</sup>" )
+label_mapping <- setNames(Centroids$custom_labels, Centroids$labels)
+Data_Type_A$custom_labels <- label_mapping[Data_Type_A$labels]
+
+p <- ggplot() + 
+  geom_point(data = Data_Type_A, aes(x = Temp, y = Irr, color = custom_labels), shape = 4, size = 1) + 
+  geom_point(data = Centroids[1:4, ], aes(x = Temp, y = Irr, color=custom_labels), shape = 21, size = 3, stroke = 1, fill = NA) + 
+  scale_color_viridis(discrete=TRUE,option="plasma") + 
+  labs(x = "Temperature [°C]", y = "Irradiation [kW/m<sup>2</sup>]", color = "Cluster")
+ggplotly(p)
+```
+
+### Choice of method for typical periods
+@fig-heating-bars show the annual heating demand calculated using typical periods with original heating demand. Both method slightly underestimate the heating demand. Based on the annual heating demands alone, it is difficult to select the appropiate method.
+
+```{r heating-bars, echo = F}
+#| label: fig-heating-bars
+#| fig-cap: "Comparison of annual heating demand calcualated using typical periods with demand calculated using original weather data. Includes only data for the period when buildings are in operation (weekdays 07.00-21.00) and when heating is required (Temperature < 16°C)"
+
+source("HeatCurve.r")
+heating_bar
+```
+
+@fig-Cluster-Quality compares the heat load curve for the original data with results from typical periods generated using two different methods; kmeans clustering and monthly averages.
+
+  - **Kmeans with k = 3** - The heat load curve (black line) intersects with all three typical periods near the middle. This indicates that the kmeans clustering aligns well closely with the original data, providing a more accurate representation of heating demand.
+  - **Monthly Averages** - The heat load curve (black line) often does not intersect with the typical periods, indicating a poor alignment. Monthly data fail to capture the variability accurately, leading to mismatched predictions of heat load.
+
+From the heat load curves, it's evident that kmeans clustering provides a more reliable prediction of heating demand by aligning more closely with the original data, unlike the typical periods generated using monthly data, which show significant discrepancies. Based on these observations, clusters generated by kmeans were used for the subsequent sections of this report. The 
+
+```{r heating-curve, echo = F}
+#| label: fig-Cluster-Quality
+#| layout-ncol: 2
+#| fig-cap: "Comparison of generated typical periods; solid line represents heating load calculated using original weather data. Includes only data for the period when buildings are in operation (weekdays 07.00-21.00) and when heating is required (Temperature < 16°C) "
+#| fig-subcap:
+#|  - "Kmeans with k = 3"
+#|  - "Monthly averages"
+#| layout: [[30,55]]
+
+kmean_int
+month_int
+```
+
+
+```{=html}
+<!-- The clustering should be performed on weather data, in our case external temperature and irradiation. Remind that it is highly recommended to normalize the data before clustering.
+
+It is required to apply at least two clustering methods and to compare the quality of the generated typical periods. It is your choice to select the preferred methodology to reduce the data. Give some visual representations of your clustering results.
+
+Optional: To conclude this first part, you can plot the hourly heat demand of the campus based on the internal heat gains, k_sun, k_th and your typical periods.
+ -->
+```

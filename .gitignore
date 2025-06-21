@@ -1,0 +1,13 @@
+/.quarto/
+setup-venv.R
+.vdoc.r
+.vdoc.py
+*.zip
+MOES
+/codes_01_energy_demand/
+/codes_02_heat_recovery/
+/codes_03_HP_modeling/
+/codes_04_energy_system_integration/
+/Figures/
+*.csv
+*.dat

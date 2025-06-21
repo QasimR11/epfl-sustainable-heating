@@ -1,0 +1,1075 @@
+# Energy system optimization
+
+```{r chunk_settings, echo=F,message = F}
+knitr::opts_chunk$set(echo = F, warning = F, message = F)
+```
+
+```{r global_settings, echo=F, message = F, warning = F}
+library(reticulate)
+if (!requireNamespace("reactable", quietly = TRUE)) { 
+  install.packages("reactable")
+  }
+library(reactable)
+library(htmltools)
+library(ggplot2)
+library(plotly)
+options(reactable.theme = reactableTheme(
+  color = "hsl(233, 9%, 15%)", #text color
+  backgroundColor = "white", 
+  borderColor = "hsl(233, 9%, 85%)",
+  stripedColor = "hsl(210, 100%, 95%)",
+  highlightColor = "hsl(210, 100%, 90%)",
+  inputStyle = list(backgroundColor = "hsl(0, 0%, 96%)"),
+  selectStyle = list(backgroundColor = "hsl(0, 0%, 96%)"),
+  pageButtonHoverStyle = list(backgroundColor = "hsl(233, 9%, 25%)"),
+  pageButtonActiveStyle = list(backgroundColor = "hsl(233, 9%, 28%)"),
+  headerStyle = list(backgroundColor = "hsl(210, 100%, 50%)", color = "white")
+))
+```
+
+## Introduction 
+The finale part of the report concerns itself with the implementation of various technologies in the EPFL heating system. Using mixed integer linear programming (MILP), a model will be build to choose the best combination of utilities for different scenarios. After the different scenarios have been analysed, a multi-objective optimisation will be executed. Finally, a sensitivity analysis will be conducted to analysis how the solution varies with changing paramters.
+
+## Energy conversion technologies
+
+The following introduced energy conversion technologies will be considered for the new heating system of EPFL. The utilities will be briefly described and then their implimentation in the AMPL model will be presented.
+
+### Cogeneration
+
+A cogeneration enigne, aslo known as combined heat and power (CHP), uses one fuel source to produce heat and power. By producing both heat and power, the CHP saves greenhouse emissions compared to a seperate unit. For this model, natural gas is considered as the fuel of this unit. In a gas turbine,the natural gas is mixed with air, compressed and then ignited. A generator produces electricity and through a heat recovery steam generator the hot water loop of the EPFL is also heated.
+
+This unit will be sized such that the electricity demand of the campus at a given time is fulfilled.
+
+Here are the assumptions for the modeling of the utility:
+
+-   lifetime is assumed to be 20 years
+
+-   Thermal efficiency $\eta_{thermal} = 0.45$ and electrical efficiency $\eta_{elec} = 0.45$, such that the unit has a total efficiency of $\eta_{chp} = \eta_{thermal} + \eta_{elec} = 0.8$ (@chp_eff)
+
+From Professors Maréchal's lecture in Advanced Energetics about Utility integration, the costs for the sizing are given. For an installed capacity between 100 - 10 000 kW, the CAPEX ranges from 800 - 4000 CHF/kW. From this the fixed part (cinv1) and variable part (cinv2) of the investment has been extracted.
+
+```{r cogen-cost, out.width = '80%'}
+#| label: fig-cogen-cost
+#| fig-cap: "Investment cost vs installed capacity for cogeneration unit"
+
+knitr::include_graphics("Figures/cogeneration_cost.png")
+```
+
+### Fuel cells
+
+Solid oxide fuel cells (SOFC) are electrochemical devices that convert the chemical energy of fuel into electrical energy. They normally operate in the range of 500-800°C. Heat can be recovered from the high temperature exhaust gas of SOFC, thereby increasing the energy efficiency of process [@Roy2024].
+
+Fuel cells hold the promise of power generation with higher efficiency and lower pollution. They offer superior performance compared to heat engines, partly due to the fact that these devices can bypass the limitations imposed by carnot efficiecny [@Roy2024]. The higher efficiency of these devices also mean that the greenhouse gas emission can be significantly reduced [@Pina2023]. Another advantage of fuel cells is the fuel flexibility. They can be operated with a wide variety of fuels such as natural gas, ammonia, hydrogen, biogas etc [@Pina2023; @Roy2024].
+
+The system is usually made up of SOFC stack and Balance of Plant components (BoP). The BoP include blowers or compressors for air and fuel, combustor to completely burn the fuel and heat exchangers to recover heat from the exhaust gases. Pina et al. (2023), compared the performance of SOFC utilizing five different fuels (methane, methanol, diesel, ammonia and hydrogen) for cruise ships. They showed that by cathode off-gas recirculation (COGR), the investment costs for the SOFC unit are reduced. Further with COGR, the amount of air required for each fuel type reduced, which resulted in higher quality exhaust gas at combustor outlet.
+
+For the modeling of fuel cells, a black box model is used. The fuel cell is modeled as single **100 kW** unit, and it is assumed that these 100 kW units will be stacked together to provide the energy demand of the campus. **Hydrogen** is the fuel selected to operate the fuel cells despite it being the most expensive fuel in Pina's studies. The decision to study hydrogen is based on its low environmental impact (depending on the source of hydrogen it can be completely carbon neutral). The following efficiencies are used to model the fuel cell [@Pina2023]:
+
+-   Electrical efficiency $\eta_{\mathrm{elec}}$ = 0.4676. In their paper, Pina defined the efficiency to be 0.49. However, because here the fuel cell is modeled as black box and we are only interested in finding how much net electrical power could be obtained this value was reduced to account for electrical energy needed for BoP components.
+-   Thermal efficiency $\eta_{\mathrm{thermal}}$ = 0.4117. The thermal efficiency is based on how much heat was recoverd in Pina's paper to how much fuel flow into the system.
+
+Based on the data from Pina [@Pina2023], the following costs are estimated for a single 100 kW module:
+
+-   Fixed investment costs : $\mathrm{c_{inv1}}$ = 0 CHF/year
+-   Variable investment costs : $\mathrm{c_{inv2}}$ = 101,886 CHF/year
+
+The variable costs also include the costs for stack replacement assuming stack lifetime of 5 year. The model estimates the number of stacks required to meet the energy demand of campus.
+
+### PV panels
+
+Photovoltaic (PV) systems provide a renewable energy source by converting solar radiation into electricity using silicon-based solar cells. With typical efficiencies around $\eta = 0.18$, these systems are scalable from small residential setups to large utility-scale installations.
+
+Key characteristics include:
+
+-    **Annual Degradation**: Approximately 0.5% ($\mathrm{degradation} = 0.005$), affecting long-term performance.
+
+-   **Area Requirement**: About 7 m$^2$ per kilowatt of capacity.
+
+-   **Capacity Factor**: Generally around 0.15 in moderate solar resource locations.
+
+-   **Lifespan**: PV panels typically have a lifespan of 25 years or more.
+
+**Investment Costs**: -
+
+-   Fixed investment cost: $c_{\text{inv1}} = 143.28 \text{ CHF}$
+
+-   Variable investment cost: $c_{\text{inv2}} = 457.59 \text{ CHF/kW}$
+
+Operational and maintenance costs are relatively low, estimated at about $10 \text{ CHF/kW/year}$.
+
+From an environmental perspective, PV systems produce no direct emissions during operation, with lifecycle emissions from manufacturing estimated at $40 \text{ kg CO}_2\text{eq/kW}$. This positions PV as a key technology for reducing carbon footprints in energy systems.
+
+### Boiler
+
+A boiler uses natural gas as a heat source for heating water or other fluids. The heated fluid can then be used either as a heat source, as for instance in water bearing systems or in other applications. 
+
+The heat provided by the fuel needed to obtain the wanted heat supply is calculated as following: 
+
+$\mathrm{Q{fuel} [W]= Q_{heating supply}/ \eta_{boiler}}$, where $\eta_{boiler}$ is given as 0.9 [@Stadler2018].
+
+The cost of installing a boiler is given by a fixed cost and an installation cost:
+
+$\mathrm{CAPEX_{boiler}[CHF]= c_{fixed} + c_{variable}*S}$ given in [CHF]
+
+where 
+
+- $\mathrm{S}$ - installed capcity of the boiler given in [kW]
+- $\mathrm{c_{fixed}}$= 79750 CHF
+- $\mathrm{c_{variable}}$= 288.62 CHF/kW 
+
+
+### Electric boiler
+
+Electric boilers offer a promising alternative to traditional natural gas boilers in energy systems. By using electricity to heat water via electrode systems, electric boilers provide controlled output from 0 to 100% of their nominal capacity, making them highly flexible for auxiliary services or leveraging spot market electricity prices [@danish2019technology].
+
+These devices, typically in the megawatt size range, are suitable for district heating systems, producing hot water or steam. Like natural gas boilers, electric boilers are often used as peak load units, but they do not rely on fossil fuels. This electrification could contributes significantly to reducing carbon emissions in scenarios targeting minimal environmental impact.
+
+Electric boilers also demonstrate a high conversion efficiency from electrical to thermal energy, with efficiencies reaching $\eta = 0.99$ [@soysal2016electric]. This efficiency allows a lower minimum temperature set point of $T_{\text{min}} = 70^\circ\text{C}$ [@jiang2013modeling]. However, from an exergy perspective, their efficiency is moderate, emphasizing the importance of context in evaluating their effectiveness.
+
+Although uncertainty remains in the potential installed capacity, electrode boilers connected to medium- or high-voltage grids (at 10 kV) can achieve production capacities of several megawatts. For this project, an installed capacity of at least 10 MW is assumed, with a lifetime of 20 years [@danish2019technology].
+
+Investment costs are influenced by electricity prices and installation specifics. Based on average installation costs [@fixrEBcosts] and nominal investments [@soysal2016electric], the following costs are estimated:
+
+-   Fixed investment cost: $c_{\text{inv1}} = 435.92 \, \text{CHF/year}$
+
+-   Variable investment cost: $c_{\text{inv2}} = 75,000 \, \text{CHF/year}$
+
+These estimates provide a baseline for integrating electric boilers into energy optimization models, considering both economic and environmental impacts.
+
+
+
+## Integration of heat recovery from NLP model
+In @sec-NLP, various heat integration options were evaluated using a non linear model. From the evaluated concepts, ventilation heat recovery with heat pump was deemed as most suitable in terms of energy savings and environmental impact. 
+
+For integration of ventilation with heat pump, the temperature results from the AMPL model (@tbl-HPvent-stream-table) are sent as parameters to the full AMPL model. This way, the heat exchanger area can be modeled as linear function of heat exchanged. Next, the costs of both heat exchanger and heat pump are linearized as shown in [@fig-Linear-HX-cost; @fig-Linear-HP-cost] respectively. The cost parameters are reported in @tbl-inv-cost-par. 
+
+```{r Linearize-exchanger-cost}
+#| label: fig-Linear-HX-cost
+#| fig-cap: "Linearization of exchanger cost "
+
+source("codes_04_energy_system_integration/Vent_HeatExchangerCost.r")
+ggplotly(p)
+```
+
+```{r Linearize-HP-cost}
+#| label: fig-Linear-HP-cost
+#| fig-cap: "Linearization of heat cost "
+
+source("codes_04_energy_system_integration/HeatPump_Cost.r")
+ggplotly(p)
+```
+
+## MILP optimisation of the EPFL energy system 
+A mixed integer linear programming (MILP) optimization problem is set up to determine the combination of technologies that will provide for the energy demand of the campus. [@tbl-Nomenclature-1; and @tbl-Nomenclature-2] provides details of all the sets, parameters and variables used in the MILP model.
+
+```{r nomen-sets}
+#| label: tbl-Nomenclature-1
+#| tbl-cap: "Nomenclature of sets used for MILP model"
+
+
+source('MOES_nomenclature.r')
+reactable(Sets_df, searchable = TRUE,
+  defaultPageSize = 6, sortable = FALSE, 
+  columns = list(
+    Set = colDef(minWidth =60),
+    Description = colDef(minWidth = 250)
+))
+```
+
+```{r nomen-vars}
+#| label: tbl-Nomenclature-2
+#| tbl-cap: "Nomenclature of variables used for MILP model"
+
+source('MOES_nomenclature.r')
+reactable(parameter_df, searchable = TRUE,
+  defaultPageSize = 10, sortable = FALSE, 
+  columns = list(
+    Variable = colDef(minWidth = 60,html = TRUE),
+    Description = colDef(minWidth = 250,html = TRUE)))
+```
+
+### Objective function
+The objective function of the MILP problem is to minimize the total expenditure per year (TOTEX). TOTEX is defined by [eq @eq-MILP-obj]:
+
+$$
+\mathrm{\min TOTEX = w_{CAPEX} \cdot CAPEX + w_{OPEX} \cdot OPEX + w_{ENVEX} \cdot ENVEX \ [\frac{CHF}{year}]}
+$${#eq-MILP-obj}
+
+### Model equations
+The equations used to set up the MILP model are defined below. For the description of variables used in the following equations, see @tbl-Nomenclature-1 and @tbl-Nomenclature-2.
+
+  - **Building heating demand** - The heating demand of each building is calculated using [eq @eq-MILP-Qheating]
+$$
+\mathrm{\dot{Q}_{b,t}^{heating} = A^{th}_{b} (U_{b}^{env}(T_{int} - T_{ext_t}) +  m_{air}C_{p,air}(T_{int} - T_{ext,new_{t}}) - k_b^{sun}\cdot I_t - \dot{Q}_b^{people} - f_{el}\dot{E}_b)}
+$${#eq-MILP-Qheating}
+
+The total heating demand for each level in each time period given by [eq @eq-MILP-QMT; eq @eq-MILP-QLT]:
+$$
+\mathrm{\dot{Q}mt_t^- = \sum_b^{MB} \dot{Q}_{b,t}^{heating}}
+$${#eq-MILP-QMT}
+
+$$
+\mathrm{\dot{Q}lt_t^- = \sum_b^{MB} \dot{Q}_{b,t}^{heating}}
+$${#eq-MILP-QLT}
+
+  - **Ventilation heat recovery** - The amount of heat recovered from ventilation air is given by [eq @eq-MILP-HeatVent]:
+$$
+\mathrm{Q_{vent} = \sum_b^B m_{air,out}C_{p_{air}}\cdot(T_{int}-T_{release_t})\cdot A_b^{th}}
+$${#eq-MILP-HeatVent}
+
+The heat exchanger area required for ventilation heat recovery is given by [eq @eq-MILP-Area-Vent]. Note that, because the temperatures are imported from NLP part, only $\mathrm{Q_{vent}}$ is a variable in the equation and thus the equation acts as a linear equation.
+$$
+\mathrm{A_{vent} \geq \frac{Q_{vent_t}}{U_{vent}\cdot \Delta T_{vent}}}
+$${#eq-MILP-Area-Vent}
+
+  - **Ventilation heat pump** - The amount of electrical energy required for heat pump is calculated using [eq @eq-MILP-HP-elec]. The duty for condeser and evaporator of heat pump are calculated using [eq @eq-Q-Cond-HP] and [eq @eq-Q-evap-HP] respectively.
+$$
+\mathrm{E^{HP}_t = Q^{cond2}_t - Q_t^{evap}}
+$${#eq-MILP-HP-elec}
+
+  - **Sizing variables** - The purchase size of utilities and the capacity at which they are used at any given time are related to the binary variable **y**, which determine the existence and whether or not a utility is installed at a given time, [eq @eq-MILP-sizing1] and [eq @eq-MILP-sizing2]. [Eq @eq-MILP-sizing3] ensures that the usage of a utility does not exceed the installation size.
+$$
+\mathrm{f_u^{min} \cdot y_u \leq f_u \leq f_u^{max} \cdot y_u}
+$${#eq-MILP-sizing1}
+
+$$
+\mathrm{f_{u,t}^{min} \cdot y_{u,t} \leq f_{u,t} \leq f_{u,t}^{max} \cdot y_{u,t}}
+$${#eq-MILP-sizing2}
+
+$$
+\mathrm{f_{u,t} \leq f_u}
+$${#eq-MILP-sizing3}
+
+ To ensure that the ventilation heat exchanger and heat pump are used for all time periods, in the AMPL model the above constraints are added with conditional statements and are valid as long as the utility under consideration is not heat pump or heat exchanger. For heat pump and heat exchanger, the sizing factors are simply equated to equipment size.
+
+  - **Heat balance** - The heat balance equation for both the low and medium temperature network are given by [eq @eq-MILP-LowT-Heat] and [eq @eq-MILP-MedT-Heat] respectively.
+
+$$
+\mathrm{\dot{Q}lt_t^- = \sum_u^{UT_{ty}} h_{u,t,tl} \cdot q_{u}^{hs} \hspace{1cm} \forall \ t \in \mathbf{T}, T_{mt} \leq T_u, \  ty = 'Heating'  }
+$${#eq-MILP-LowT-Heat}
+
+$$
+\mathrm{\dot{Q}mt_t^- = \sum_u^{UT_{ty}} h_{u,t,tl} \cdot q_{u}^{hs} \hspace{1cm} \forall \ t \in \mathbf{T}, T_{mt} \leq T_u, \  ty = 'Heating'  }
+$${#eq-MILP-MedT-Heat}
+
+The size of utility is is then determined
+by summing up h over the set of temperature levels by using [eq @eq-MILP-heating-mult]
+$$
+\mathrm{f_{u,t} = \sum^{TL} h_{u,t,tl} \hspace{1cm} \forall \ t \in \mathbf{T}, \ u \in U}
+$${#eq-MILP-heating-mult}
+
+  - **Resource balances** - For the electricity and other resources (natural gas and hydrogen in this case), the electricity or fuel ﬂow in and out is calculated using [eq @eq-MILP-flow-in] and [eq @eq-MILP-flow-out] respectively.
+
+$$
+\mathrm{\dot{M}_{u,t}^{in} = f_{u,t} \cdot m_u^{in} \hspace{1cm} \forall \ t \in \mathbf{T}}
+$${#eq-MILP-flow-in}
+
+$$
+\mathrm{\dot{M}_{u,t}^{out} = f_{u,t} \cdot m_u^{out} \hspace{1cm} \forall \ t \in \mathbf{T}}
+$${#eq-MILP-flow-out}
+
+The balance for electricity and other resources is given by [eq @eq-MILP-elec-balance; eq @eq-MILP-resource-balance].
+$$
+\mathrm{\dot{E}_t^- + \sum_u^{UL_l} \dot{M}_{u,t}^{in} = \sum_u^{UL_l} \dot{M}_{u,t}^{out} \hspace{1cm} \forall \ t \in \mathbf{T}; l = 'Electricity'}
+$${#eq-MILP-elec-balance}
+
+$$
+\mathrm{\sum_u^{UL_l} \dot{M}_{u,t}^{in} = \sum_u^{UL_l} \dot{M}_{u,t}^{out} \hspace{1cm} \forall \ t \in \mathbf{T}; l \neq 'Electricity'}
+$${#eq-MILP-resource-balance}
+
+  - **Investment costs** - The investment costs are given by [eq @eq-MILP-CAPEX]. The investment costs are linearized for each technology and are summarized in @tbl-inv-cost-par
+$$
+\mathrm{CAPEX = \sum_u^{TC} (C_{TC}^{inv1} \cdot y_u + C_{TC}^{inv2} \cdot f_u)}
+$${#eq-MILP-CAPEX}
+
+```{r inv_cost_par, echo = F}
+#| label: tbl-inv-cost-par
+#| tbl-cap: "Parameters to be used in [eq @eq-MILP-CAPEX] for annualized CAPEX"  
+
+pd <- import("pandas")
+base_case <- pd$read_pickle("codes_04_energy_system_integration//results//basecase.pkl")
+
+cinv1 <- (py_to_r(base_case$cinv1))
+cinv2 <- (py_to_r(base_case$cinv2))
+
+inv_df <- data.frame(
+  Technology = c('Boiler','Cogeneration','Electric boiler','PV panels','SOFC','Vent Heat pump','Vent Heat exchanger'),
+  cinv1 = cinv1$cinv1,
+  cinv2 = cinv2$cinv2
+)
+reactable(inv_df, highlight = TRUE,
+  columns = list(
+    Technology = colDef(minWidth = 200),
+    cinv1 = colDef(name = 'C<sup>inv1</sup>', html = TRUE, format=colFormat(digits=2)),
+    cinv2 = colDef(name = 'C<sup>inv2</sup>', html = TRUE, format=colFormat(digits=2))
+  ))
+```
+
+  - **Operational costs** - The operational costs over the year are given by [eq @eq-MILP-OPEX]. 
+$$
+\mathrm{OPEX = \sum_u^{U} \sum_{t=1}^T (C_{u,t}^{op1} \cdot y_{u,t} + C_{u,t}^{op2} \cdot f_{u,t}) \cdot t^{op}[t]}
+$${#eq-MILP-OPEX}
+
+  - **Environmental costs** - The environmental costs (CO$_{2}$ tax) is calculated using [eq @eq-MILP-ENVEX] 
+$$
+\mathrm{ENVEX = CO_2^+ \gamma^{CO_2^+}}
+$${#eq-MILP-ENVEX}
+
+  - **CO$_{2}$ emissions** - The amount of CO$_2$ emitted during a year is given by [eq @eq-MILP-CO2]. The value for parameter $\epsilon_g^{CO_2}$ is given in @tbl-emis-table [@IEA2024;@EnergyScope2024].
+$$
+\mathrm{CO_2^+ = \sum_g^G \sum_{t=1}^T f_{g,t} \cdot \epsilon_g^{CO_2}}
+$${#eq-MILP-CO2}
+
+```{r emission-table}
+#| label: tbl-emis-table
+#| tbl-cap: "Carbon dioxide emissions associated with grids"
+
+cCO2 <- py_to_r(base_case$c_CO2)
+emis_df <- data.frame(
+  Grid = c('Electricity buy','Electricity sell','Hydrogen Grid','Natural gas'),
+  Value = cCO2$c_CO2
+)
+
+reactable(emis_df, highlight = TRUE,
+  columns = list(
+    Value = colDef(name = 'CO<sub>2</sub> emissions [g/kWh]',html = TRUE, align = "center")
+  ),
+  defaultColDef = colDef(minWidth = 150)
+  )
+```
+
+### MILP results {#sec-MILP-results}
+This section presents the results for base case model. In the base case the weights associated with each cost element is set to 1 in [eq @eq-MILP-obj]. @fig-MILP-heat-demand shows the heating demand for buildings for each typical period. As expected, the maximum heat demand is during the extreme period and it becomes lower when the temperature and irradiation is higher. 
+
+```{r heat-demand}
+#| label: fig-MILP-heat-demand
+#| fig-cap: "Heating demand per period"
+
+source_python("codes_04_energy_system_integration/base_case.py")
+df <- data.frame(Qheat)
+df$hover_text <- paste0( "Period: ", df$index1, "\n", "Heating Demand: ", round(df$Qheatingdemand/1000, 2), " MW\n", "Temperature level: ",df$index0 )
+p <- ggplot(df, aes(x = index1, y = Qheatingdemand/1000, fill= index0, text = hover_text)) +
+  geom_bar(stat="identity", position=position_dodge()) + 
+  labs(x = 'Period', y = 'Heating demand [MW]', fill = 'Temperature level')
+ggplotly(p, tooltip = "text")
+```
+
+```{r costs-base-case}
+CAPEX_bc <- py_to_r(base_case$InvCost)
+OPEX_bc <- py_to_r(base_case$OpCost)
+ENVEX_bc <- py_to_r(base_case$ENVEX)
+TOTEX_bc <- CAPEX_bc + OPEX_bc + ENVEX_bc
+```
+
+The optimal cost for meeting the heating demand of EPFL campus with the installation of new technologies is `r format(round(TOTEX_bc,0), big.mark = " ", scientific = FALSE)` $\frac{\mathrm{CHF}}{\mathrm{year}}$. The breakdown of TOTEX is:
+
+  - **Investment cost** = `r format(round(CAPEX_bc,0), big.mark = " ", scientific = FALSE)` $\frac{\mathrm{CHF}}{\mathrm{year}}$.
+  - **Operational cost** = `r format(round(OPEX_bc,0), big.mark = " ", scientific = FALSE)` $\frac{\mathrm{CHF}}{\mathrm{year}}$.
+  - **Environment cost** = `r format(round(ENVEX_bc,0), big.mark = " ", scientific = FALSE)` $\frac{\mathrm{CHF}}{\mathrm{year}}$.
+
+@tbl-Tech-base-case lists the technologies considered for energy system along with their installed capacity and annualized costs. @fig-MILP-mult-t-bc shows the usage of each technology for each typical period.
+
+```{r Technology-base-case}
+#| label: tbl-Tech-base-case
+#| tbl-cap: "Technologies selected by optimizer, their installed capacity and associated costs"
+
+mult_bc <- as.numeric(unlist(py_to_r(base_case$mult)))
+names(mult_bc) <- c(
+  "Boiler", "Cogeneration", "EB", "ElecGridBuy", "ElecGridSell", 
+  "HydrogenGrid", "NatGasGrid", "PV", "SOFC", "VentHP", "VentHX")
+# Select only the desired variables: Boiler, Cogeneration, EB, PV, SOFC
+selected_variables <- c("Boiler", "Cogeneration", "EB", "PV", "SOFC","VentHP", "VentHX")
+filtered_mult_bc <- mult_bc[selected_variables]
+capacity <- c(
+  10 * filtered_mult_bc["Boiler"],            # Boiler in MW
+  10 * filtered_mult_bc["Cogeneration"],      # Cogeneration in MW
+  10 * filtered_mult_bc["EB"],                # Electric Boiler in MW
+  3/1000 * filtered_mult_bc["PV"],                 # PV in kW
+  82.73/1000 * filtered_mult_bc["SOFC"],  # SOFC in kW
+  filtered_mult_bc["VentHP"]/1000,            
+  filtered_mult_bc["VentHX"]
+)
+use_bc <- unlist(base_case$use)
+names(use_bc) <- c(
+  "Boiler", "Cogeneration", "EB", "ElecGridBuy", "ElecGridSell", 
+  "HydrogenGrid", "NatGasGrid", "PV", "SOFC", "VentHP", "VentHX")
+use_bc <- use_bc[selected_variables]
+# Annual costs
+cost <- cinv1*use_bc + filtered_mult_bc*cinv2
+
+mult_df <- data.frame(
+  Technology = c('Boiler','Cogeneration','Electric boiler','PV panel','SOFC','Vent heat pump','Vent heat exchanger'),
+  Factor = filtered_mult_bc,  # Numeric values for each variable
+  Capacity = capacity, # Installed capacity
+  Units = c("MW", "MW", "MW", "MW", "MW","MW","m<sup>2</sup>"),  # Units for each technology
+  Cost = cost
+)
+reactable(mult_df,
+  resizable = TRUE,
+  highlight = TRUE,
+  sortable = TRUE,
+  outlined = TRUE,
+  striped = TRUE,
+  rownames = FALSE,
+  columns = list(
+    Technology = colDef(minWidth = 120, html = TRUE),
+    Factor = colDef(cell= function(value){
+    # Render as an X mark or check mark
+    if (value == 0) "\u274c No" else "\u2714\ufe0f Yes"
+  }, name = 'Install technology', minWidth = 100, align = "center", format = colFormat(digits = 2)),
+    Capacity = colDef(name = 'Installed capacity', align = "center", minWidth = 100,format = colFormat(digits = 2)),
+    Units = colDef(minWidth = 100, html = TRUE, align = "center"),
+    cinv1 = colDef(minWidth = 120, name = 'Annualized cost [CHF/year]',align = "center",format = colFormat(digits = 0))
+  )
+)
+```
+
+```{r mult-t-bc}
+#| label: fig-MILP-mult-t-bc
+#| fig-cap: "Contribution of different technologies to energy demand of campus for each typical period"
+
+source_python("codes_04_energy_system_integration/base_case.py")
+selected_variables <- c("Boiler", "Cogeneration", "EB")
+mult_t_bc <- mult_t
+mult_t_bc <- subset(mult_t_bc, index0 %in% selected_variables)
+mult_t_bc$hover_text <- paste0( "Period: ", mult_t_bc$index1, "\n", "Usage: ", round(mult_t_bc$mult_t * 10, 2), " MW\n", "Technology: ", mult_t_bc$index0 )
+
+
+p <- ggplot(mult_t_bc, aes(x = index1, y = mult_t*10, fill = index0, text = hover_text)) +
+  geom_bar(stat="identity", position='stack') +
+  labs (x = 'Period', y = 'Heating Demand [MW]', fill = 'Technology')
+ggplotly(p, tooltip = "text")
+
+```
+
+A few remarks about the optimal solution are listed below:
+
+  - It is interesting to note that the PV panels are not included in the optimum solution. Possible reasoning for the exclusion of PV panels is the high investment costs associated with them.
+  - Solid oxide fuel cell is also not part of the optimal solution. This was expected as the initial investment associated with fuel cells is very high. Also, in the model the fuel cells are operated on hydrogen, which compared to natural gas is quite expensive. 
+  - For cogeneration, maximum capacity has been selected by optimizer. This has to do with the fact that cogeneration is very effective technology and can provide both electrical and thermal energy. Looking at @fig-MILP-mult-t-bc we can see that cogeneration is used in all periods. For periods with low heating demand i.e. period 1 and 3 it is preferred over boiler, as it can provide electrical energy as well. 
+  - The installed capacity of electrical boiler is the largest of all technologies considered. However, the EB are only for the extreme period (period 4), where the installed capacity of boiler and cogeneration unit is insufficient to meet the campus demands. Perhaps, if the maximum capacity of cogeneration and boiler units were higher, electric boiler will not even be part of optimal solution.
+
+## Scenario analysis
+
+A scenario analysis explores and evaluates the influence of possible future events and its implications on todays descisions. In this report, three potential futures will be examined using scenario analysis. For each scenario, the objective function within the MILP optimization model will be adjusted to appropriately reflect the varying priorities and outcomes.
+
+### Scenario 1: Minimize operating costs
+
+In this scenario, EPFL currently operates with a significant budget, allowing for substantial capital investments. However, projections suggest that this economic flexibility will be significantly reduced in the coming years due to a financial crisis. This anticipated shift necessitates a strategic approach to planning the future heating system of EPFL, with an emphasis on ensuring long-term operating costs are sufficiently low to support the institution’s economic sustainability.
+
+To reflect this scenario in the MILP model, the objective function is adjusted so that it minimizes the operating costs. This approach acknowledges that while short-term spending flexibility exists, it must be utilized to mitigate the impacts of future budgetary restrictions. @tbl-Tech-scen1 shows the technologies and their installed capacities. A boiler, a cogeneration engine and PV panels will be installed with the mentioned capacities. In this scenario, most of the heat capacity will come from the boiler, due to the fact that the unit cost of natural gas is quite low compared to other resources. 
+
+```{r scenario1, echo=F}
+#| label: tbl-Tech-scen1
+#| tbl-cap: "Technologies selected by optimizer, their installed capacity and associated costs when the objective is to minimize OPEX"
+
+# Load required libraries
+library(reticulate)
+library(tibble)
+library(reactable)
+
+# Import Python modules
+pickle <- import("pickle")
+
+# Open the .pkl file using Python's built-in `open`
+file_path <- "codes_04_energy_system_integration/results/scenario1.pkl"
+
+# Use Python's open and load functions
+file <- py_eval(paste0("open('", file_path, "', 'rb')"))
+data <- pickle$load(file)
+
+# Extract the 'mult' data
+mult_data <- data[["mult"]]
+
+# Convert mult_data to a numeric vector if it is not already numeric
+if (is.list(mult_data)) {
+  mult_data <- as.numeric(unlist(mult_data))
+}
+
+# Assign names to the vector (for the specific variables you want)
+names(mult_data) <- c(
+  "Boiler", "Cogeneration", "EB", "ElecGridBuy", "ElecGridSell", 
+  "HydrogenGrid", "NatGasGrid", "PV", "SOFC", "VentHP", "VentHX"
+)
+
+# Select only the desired variables: Boiler, Cogeneration, EB, PV, SOFC
+selected_variables <- c("Boiler", "Cogeneration", "EB", "PV", "SOFC")
+filtered_mult_data <- mult_data[selected_variables]
+
+# Apply the scaling factors (e.g., 10 MW for Boiler, Cogeneration, and Electric Boiler; 3 kW for PV; 82.73 kW for SOFC)
+capacity <- c(
+  10 * filtered_mult_data["Boiler"],            # Boiler in MW
+  10 * filtered_mult_data["Cogeneration"],      # Cogeneration in MW
+  10 * filtered_mult_data["EB"],                # Electric Boiler in MW
+  3/1000 * filtered_mult_data["PV"],                 # PV in kW
+  82.73/1000 * filtered_mult_data["SOFC"]            # SOFC in kW
+)
+
+# Create a data frame from the filtered data
+data_table <- tibble::tibble(
+  Technology = c("Boiler", "Cogeneration", "Electric Boiler", "PV", "SOFC"),  # Names as the Variable column
+  Factor = filtered_mult_data,  # Numeric values for each variable
+  Capacity = capacity, # Installed capacity
+  Units = c("MW", "MW", "MW", "MW", "MW")  # Units for each technology
+)
+
+# Render the table with reactable
+reactable(
+  data_table,
+  resizable = TRUE,
+  wrap = FALSE,
+  highlight = TRUE,
+  sortable = TRUE,
+  outlined = TRUE,
+  striped = TRUE,
+  columns = list(
+    Technology = colDef(minWidth = 100, html = TRUE),
+    Factor = colDef(cell= function(value){
+    # Render as an X mark or check mark
+    if (value == 0) "\u274c No" else "\u2714\ufe0f Yes"
+  }, name = 'Install technology',align = "center", minWidth = 120, format = colFormat(digits = 2)),
+    Capacity = colDef(name = 'Installed capacity',align = "center",format = colFormat(digits = 2)),
+    Units = colDef(minWidth = 60, html = TRUE,align = "center")  # Units column
+  )
+)
+```
+
+Key performance indicators when trying to minimise the OPEX, are shown in @tbl-KPI-scen1. Compared to results discussed in @sec-MILP-results ,both the CAPEX and ENVEX are higher, as the objective mainly prioritises minimization of operating costs.
+
+```{r scenario1cost, echo=F}
+#| label: tbl-KPI-scen1
+#| tbl-cap: "Key performance indicators when the objective is to minimize OPEX"
+
+# Load required libraries
+library(reticulate)
+library(tibble)
+library(reactable)
+
+# Import Python modules
+pickle <- import("pickle")
+
+# Open the .pkl file using Python's built-in `open`
+file_path <- "codes_04_energy_system_integration/results/scenario1.pkl"
+
+# Use Python's open and load functions
+file <- py_eval(paste0("open('", file_path, "', 'rb')"))
+data <- pickle$load(file)
+
+# Extract the necessary variables
+capex <- data[["InvCost"]]
+opex <- data[["OpCost"]]
+objective_fun <- data[["Totalcost"]] # renamed it from totex to objective, since objective and totex are different 
+co2_emission <- sum(as.numeric(unlist(data[["CO2_emission"]])))/1e6 #CO2 emissions are defined for each period, added a sum there to account for the entire year, divide by 1e6 to convert to tons/yr
+envex <- as.numeric(unlist(data[["ENVEX"]]))
+totex <- capex + opex + envex
+
+# Prepare the data for the table
+data_table <- tibble::tibble(
+  KPI = c("CAPEX", "OPEX", "ENVEX", "TOTEX", "CO2 Emission"),
+  Value = c(capex, opex,envex, totex, co2_emission),  # Use first values of emission-related variables
+  Units = c("CHF/year", "CHF/year", "CHF/year", "CHF/year", "tonnes CO<sub>2</sub>/year")  # Define units for each KPI
+)
+
+# Render the table with reactable
+reactable(
+  data_table,
+  resizable = TRUE,
+  wrap = FALSE,
+  highlight = TRUE,
+  sortable = FALSE,
+  outlined = TRUE,
+  striped = TRUE,
+  columns = list(
+    KPI = colDef(minWidth = 140, html = TRUE),
+    Value = colDef(minWidth = 140, format = colFormat(digits = 2, separators = TRUE)),
+    Units = colDef(minWidth = 100, html = TRUE)  # Add a column for units
+  )
+)
+
+```
+
+### Scenario 2: Rising natural gas prices and climate protests
+
+The second scenario examines a future where the price of natural gas has significantly increased, making it a less economically viable heating source for EPFL. In addition, climate activists strongly advocate for a transition away from natural gas due to its environmental impact, urging institutions like EPFL to adopt more sustainable energy solutions. In response to these pressures, EPFL aims to minimize its reliance on natural gas, aligning with both economic and environmental goals.
+
+To reflect this scenario in the model, the objective function is adjusted to minimize the use of natural gas. This change not only addresses the financial implications of rising energy costs but also supports EPFL’s commitment to reducing its carbon footprint. By prioritizing alternative energy sources and optimizing the heating system, the model will identify strategies to limit natural gas consumption while maintaining operational efficiency.
+
+The objective function used for this optimisation is to minimize ENVEX, which is the cost related to the environmental impact of a utility. Here PV, cogeneration, SOFC and an electric boiler will be installed as indicated by @tbl-Tech-scen2. Most of the heat will be provided from the electric boiler. 
+
+```{r scenario2, echo=F}
+#| label: tbl-Tech-scen2
+#| tbl-cap: "Technologies selected by optimizer, their installed capacity and associated costs when the objective is to minimize ENVEX"
+
+# Load required libraries
+library(reticulate)
+library(tibble)
+library(reactable)
+
+# Import Python modules
+pickle <- import("pickle")
+
+# Open the .pkl file using Python's built-in `open`
+file_path <- "codes_04_energy_system_integration/results/scenario2.pkl"
+
+# Use Python's open and load functions
+file <- py_eval(paste0("open('", file_path, "', 'rb')"))
+data <- pickle$load(file)
+
+# Extract the 'mult' data
+mult_data <- data[["mult"]]
+
+# Convert mult_data to a numeric vector if it is not already numeric
+if (is.list(mult_data)) {
+  mult_data <- as.numeric(unlist(mult_data))
+}
+
+# Assign names to the vector (for the specific variables you want)
+names(mult_data) <- c(
+  "Boiler", "Cogeneration", "EB", "ElecGridBuy", "ElecGridSell", 
+  "HydrogenGrid", "NatGasGrid", "PV", "SOFC", "VentHP", "VentHX"
+)
+
+# Select only the desired variables: Boiler, Cogeneration, EB, PV, SOFC
+selected_variables <- c("Boiler", "Cogeneration", "EB", "PV", "SOFC")
+filtered_mult_data <- mult_data[selected_variables]
+
+# Apply the scaling factors (e.g., 10 MW for Boiler, Cogeneration, and Electric Boiler; 3 kW for PV; 82.73 kW for SOFC)
+capacity <- c(
+  10 * filtered_mult_data["Boiler"],            # Boiler in MW
+  10 * filtered_mult_data["Cogeneration"],      # Cogeneration in MW
+  10 * filtered_mult_data["EB"],                # Electric Boiler in MW
+  0.003 * filtered_mult_data["PV"],                 # PV in kW
+  82.73/1000* filtered_mult_data["SOFC"]            # SOFC in kW
+)
+
+# Create a data frame from the filtered data
+data_table <- tibble::tibble(
+  Technology = c("Boiler", "Cogeneration", "Electric Boiler", "PV", "SOFC"),  # Names as the Variable column
+  Factor = filtered_mult_data,  # Numeric values for each variable
+  Capacity = capacity, # Installed capacity
+  Units = c("MW", "MW", "MW", "MW", "MW")  # Units for each technology
+)
+
+# Render the table with reactable
+reactable(
+  data_table,
+  resizable = TRUE,
+  wrap = FALSE,
+  highlight = TRUE,
+  sortable = TRUE,
+  outlined = TRUE,
+  striped = TRUE,
+  columns = list(
+    Technology = colDef(minWidth = 100, html = TRUE),
+    Factor = colDef(cell= function(value){
+    # Render as an X mark or check mark
+    if (value == 0) "\u274c No" else "\u2714\ufe0f Yes"}, name = 'Install technology', align = "center",minWidth = 100, format = colFormat(digits = 2)),
+    Capacity = colDef(name = 'Installed capacity',align = "center", format = colFormat(digits = 2)),
+    Units = colDef(minWidth = 60,align = "center", html = TRUE)  # Units column
+  )
+)
+
+```
+
+@tbl-KPI-scen2 shows the key performance indicators when the objective is to minimize environmental impact. Both the CAPEX and the OPEX are significantly larger in this case compared to scenario 1 and the ENVEX is about 1/5. This is reasonable since the objective function in this case does not prioritise the minimisation of the operational and investment costs.
+
+```{r scenario2cost, echo=F}
+#| label: tbl-KPI-scen2
+#| tbl-cap: "Key performance indicators when the objective is to minimize ENVEX"
+
+# Load required libraries
+library(reticulate)
+library(tibble)
+library(reactable)
+
+# Import Python modules
+pickle <- import("pickle")
+
+# Open the .pkl file using Python's built-in `open`
+file_path <- "codes_04_energy_system_integration/results/scenario2.pkl"
+
+# Use Python's open and load functions
+file <- py_eval(paste0("open('", file_path, "', 'rb')"))
+data <- pickle$load(file)
+
+# Extract the necessary variables
+capex <- data[["InvCost"]]
+opex <- data[["OpCost"]]
+objective_fun <- data[["Totalcost"]]
+co2_emission <- sum(as.numeric(unlist(data[["CO2_emission"]])))/1e6
+envex <- as.numeric(unlist(data[["ENVEX"]]))
+totex <- capex + opex + envex
+
+# Prepare the data for the table
+data_table <- tibble::tibble(
+  KPI = c("CAPEX", "OPEX", "ENVEX","TOTEX", "CO2 Emission"),
+  Value = c(capex, opex,envex, totex, co2_emission ),  # Use first values of emission-related variables
+  Units = c("CHF/year", "CHF/year", "CHF/year", "CHF/year", "tonnes CO<sub>2</sub>/year")  # Define units for each KPI
+)
+
+# Render the table with reactable
+reactable(
+  data_table,
+  resizable = TRUE,
+  wrap = FALSE,
+  highlight = TRUE,
+  sortable = FALSE,
+  outlined = TRUE,
+  striped = TRUE,
+  columns = list(
+    KPI = colDef(minWidth = 140, html = TRUE),
+    Value = colDef(minWidth = 140, format = colFormat(digits = 2, separators =  TRUE)),
+    Units = colDef(minWidth = 100, html = TRUE)  # Add a column for units
+  )
+)
+
+
+```
+
+### Scenario 3: Capital investment restrictions
+
+In the third scenario, EPFL faces severe financial limitations, making it difficult to allocate funds for large capital investments. As a result, the institution's immediate focus shifts to minimizing the costs of installing new technologies, particularly those related to energy systems.
+
+To model this scenario in the AMPL model, the objective function is adjusted to minimize the capital expenditure associated with the installation of new technologies. This approach considers only affordable, lower-cost technologies that can be implemented with the available budget, while still delivering the required performance levels. When the CAPEX is minimized the optimal combination of utilities is a boiler, a cogeneration engine and a electrical boiler as shown in @tbl-Tech-scen3. Compared to the case of minimization of OPEX, here the optimal solution excludes the use of PV panels, due to the high investment costs associated with PV panels 
+
+```{r scenario3, echo=F}
+#| label: tbl-Tech-scen3
+#| tbl-cap: "Technologies selected by optimizer, their installed capacity and associated costs when the objective is to minimize CAPEX"
+
+# Load required libraries
+library(reticulate)
+library(tibble)
+library(reactable)
+
+# Import Python modules
+pickle <- import("pickle")
+
+# Open the .pkl file using Python's built-in `open`
+file_path <- "codes_04_energy_system_integration/results/scenario3.pkl"
+
+# Use Python's open and load functions
+file <- py_eval(paste0("open('", file_path, "', 'rb')"))
+data <- pickle$load(file)
+
+# Extract the 'mult' data
+mult_data <- data[["mult"]]
+
+# Convert mult_data to a numeric vector if it is not already numeric
+if (is.list(mult_data)) {
+  mult_data <- as.numeric(unlist(mult_data))
+}
+
+# Assign names to the vector (for the specific variables you want)
+names(mult_data) <- c(
+  "Boiler", "Cogeneration", "EB", "ElecGridBuy", "ElecGridSell", 
+  "HydrogenGrid", "NatGasGrid", "PV", "SOFC", "VentHP", "VentHX"
+)
+
+# Select only the desired variables: Boiler, Cogeneration, EB, PV, SOFC
+selected_variables <- c("Boiler", "Cogeneration", "EB", "PV", "SOFC")
+filtered_mult_data <- mult_data[selected_variables]
+
+# Apply the scaling factors (e.g., 10 MW for Boiler, Cogeneration, and Electric Boiler; 3 kW for PV; 82.73 kW for SOFC)
+capacity <- c(
+  10 * filtered_mult_data["Boiler"],            # Boiler in MW
+  10 * filtered_mult_data["Cogeneration"],      # Cogeneration in MW
+  10 * filtered_mult_data["EB"],                # Electric Boiler in MW
+  0.003 * filtered_mult_data["PV"],                 # PV in kW
+  82.73 * filtered_mult_data["SOFC"]            # SOFC in kW
+)
+
+# Create a data frame from the filtered data
+data_table <- tibble::tibble(
+  Technology = c("Boiler", "Cogeneration", "Electric Boiler", "PV", "SOFC"),  # Names as the Variable column
+  Factor = filtered_mult_data,  # Numeric values for each variable
+  Capacity = capacity, # Installed capacity
+  Units = c("MW", "MW", "MW", "MW", "kW")  # Units for each technology
+)
+
+# Render the table with reactable
+reactable(
+  data_table,
+  resizable = TRUE,
+  wrap = FALSE,
+  highlight = TRUE,
+  sortable = FALSE,
+  outlined = TRUE,
+  striped = TRUE,
+  columns = list(
+    Technology = colDef(minWidth = 100, html = TRUE),
+    Factor = colDef(cell= function(value){
+    if (value == 0) "\u274c No" else "\u2714\ufe0f Yes"}, name = 'Install technology',align = "center", minWidth = 100, format = colFormat(digits = 2)),
+    Capacity = colDef(name = 'Installed capacity',align = "center",format = colFormat(digits = 2)),
+    Units = colDef(minWidth = 60,align = "center", html = TRUE)  # Units column
+  )
+)
+
+```
+
+The impact of this new objective function is clearly visible in @tbl-KPI-scen3. By minimising the CAPEX, the OPEX gets quite large. Due to the current financial situation of this scenario, having larger budgets the following years is not necessarily realistic and the large operational costs may present a probelm.
+
+```{r scenario3cost, echo=F}
+#| label: tbl-KPI-scen3
+#| tbl-cap: "Key performance indicators when the objective is to minimize CAPEX"
+
+# Load required libraries
+library(reticulate)
+library(tibble)
+library(reactable)
+
+# Import Python modules
+pickle <- import("pickle")
+
+# Open the .pkl file using Python's built-in `open`
+file_path <- "codes_04_energy_system_integration/results/scenario3.pkl"
+
+# Use Python's open and load functions
+file <- py_eval(paste0("open('", file_path, "', 'rb')"))
+data <- pickle$load(file)
+
+# Extract the necessary variables
+capex <- data[["InvCost"]]
+opex <- data[["OpCost"]]
+objective_fun <- data[["Totalcost"]]
+co2_emission <- sum(as.numeric(unlist(data[["CO2_emission"]])))/1e6
+envex <- as.numeric(unlist(data[["ENVEX"]]))
+totex <- capex + opex + envex
+
+# Prepare the data for the table
+data_table <- tibble::tibble(
+  KPI = c("CAPEX", "OPEX", "ENVEX","TOTEX", "CO2 Emission"),
+  Value = c(capex, opex,envex, totex, co2_emission ),  # Use first values of emission-related variables
+  Units = c("CHF/year", "CHF/year", "CHF/year", "CHF/year", "tonnes CO<sub>2</sub>/year")  # Define units for each KPI
+)
+
+# Render the table with reactable
+reactable(
+  data_table,
+  resizable = TRUE,
+  wrap = FALSE,
+  highlight = TRUE,
+  sortable = FALSE,
+  outlined = TRUE,
+  striped = TRUE,
+  columns = list(
+    KPI = colDef(minWidth = 140, html = TRUE),
+    Value = colDef(minWidth = 140, format = colFormat(digits = 2, separators =  TRUE)),
+    Units = colDef(minWidth = 100, html = TRUE)  # Add a column for units
+  )
+)
+
+```
+
+## Multi-objective optimization
+
+Multi-objective optimization enables the comparison of different objectives simultaneously, addressing the trade-offs inherent to real-world energy system design. In this project, the optimization aims to minimize investment costs (CAPEX) and CO2 emissions, represented by the carbon tax (ENVEX) using a value of 140 USD/ton @IEA2024.
+
+Since a solution minimizing both objectives is unattainable, the Pareto front identifies solutions where these objectives are optimally balanced. @fig-pareto-optimization illustrates this Pareto front, separating feasible and infeasible solutions.
+
+![Pareto front (trade-off environmental impact/investment costs)](Figures/pareto_frontier.png){#fig-pareto-optimization}
+
+To assist decision-makers, we highlight three distinct Pareto-optimal solutions:
+
+-   **Option 1**: Minimizing CAPEX
+-   **Option 2**: Minimizing ENVEX
+-   **Option 3**: A balanced trade-off between CAPEX and CO2 emissions
+
+@tbl-moo-results summarizes the key results for each option, including the objectives (CAPEX, OPEX, and ENVEX) and the multiplication factors for various utilities, reflecting their respective sizes.
+
+Key insights derived from the results:
+
+1.  **Decarbonization Influence**:
+    -   Option 1 relies primarily on gas boilers and natural gas, reflecting minimal investment in decarbonization technologies.
+
+    -   Options 2 and 3 progressively phase out gas boilers and natural gas, emphasizing hydrogen and renewable energy technologies.
+2.  **Photovoltaic Panels and SOFC Deployment**:
+    -   Option 2 heavily invests in PV panels and solid oxide fuel cells (SOFC) to reduce emissions, showcasing a costly but effective decarbonization strategy.\
+    -   In contrast, Option 3 balances costs and emissions, maintaining cogeneration and a moderate SOFC size while only slightly introducing PV panel installation.
+<!-- 3.  **Ventilation Heat Recovery**:
+    -   Ventilation heat recovery plays a critical role in both emission and costs reduction, as it remains the same in all options. -->
+
+```{r moo-results}
+#| label: tbl-moo-results
+#| tbl-cap: "Summary of Pareto-optimal solutions for CAPEX and CO2 emissions."
+
+pareto_df <- data.frame(
+    Option = c("Option 1 (Min CAPEX)", "Option 2 (Min ENVEX)", "Option 3 (Trade-off)"),
+    ENVEX = c(4223, 147.30, 798),
+    CAPEX = c(670611, 104759900, 21488469),
+    OPEX = c(2744629, 6188139, 64014550),
+    Boiler = c(1.117*10, 0, 0),
+    Cogeneration = c(1*10, 0, 0.43),
+    Electric_Boiler = c(2.5*10, 2.5*10, 2.5*10),
+    PV_Panels = c(0, 5000, 300)*0.003,
+    SOFC = c(0, 1000, 204)*82.73/1000
+    # Vent_HP = c(956, 956, 956),
+    # Vent_Recovery = c(9364, 9364, 9364)
+  )
+reactable(pareto_df,resizable = TRUE,
+  highlight = TRUE,
+  sortable = TRUE,
+  outlined = TRUE,
+  striped = TRUE,
+  columns = list(
+    ENVEX = colDef(name = "ENVEX [CHF/year]", align = "center", format = colFormat(digits = 0, separator = TRUE)),
+    CAPEX = colDef(name = "CAPEX [CHF/year]", align = "center", format = colFormat(digits = 0, separator = TRUE)),
+    OPEX = colDef(name = "OPEX [CHF/year]", align = "center", format = colFormat(digits = 0, separator = TRUE)),
+    Boiler = colDef(name = "Boiler [MW]", align = "center", format = colFormat(digits = 2)),
+    Cogeneration = colDef(name = "Cogeneration [MW]", align = "center",minWidth = 125, format = colFormat(digits = 2)),
+    Electric_Boiler = colDef(name = "Electric boiler [MW]", align = "center", format = colFormat(digits = 2)),
+    PV_Panels = colDef(name = "PV panels [MW]", align = "center", format = colFormat(digits = 2)),
+    SOFC = colDef(name = "SOFC [MW]", align = "center", format = colFormat(digits = 2))
+  ),
+  defaultColDef = colDef(minWidth = 120)
+)
+
+```
+
+## Sensitivity Analysis
+
+This section presents the results of the sensitivity analysis performed to evaluate the impact of electricity price variations on the total cost of the energy system. Electricity prices were incrementally increased from the baseline value of 0.0916 CHF/kWh up to 0.2416 CHF/kWh in five steps. The total cost, which includes both investment and operational expenses, was calculated for each price level to assess how sensitive the system's performance is to changes in electricity prices.
+
+The analysis reveals an interesting trend, as shown in @fig-sensitivity. At the baseline electricity price of 0.0916 CHF/kWh, the total cost of the system is 21.866 MCHF. However, as the price increases slightly to 0.1016 CHF/kWh, the total cost unexpectedly drops to 21.861 MCHF, reflecting an optimization shift in the system. This reduction suggests that the model adjusts its operational strategy —potentially by reducing reliance on grid electricity and utilizing more cost-effective technologies— to offset the increased electricity price.
+
+Beyond this point, the relationship between electricity price and total cost follows a clear upward trend. For instance, when the price is set to 0.1216 CHF/kWh, the total cost rises to 21.872 MCHF. This trend continues and the total cost peaks at 21.942 MCHF when the electricity price reaches the end of our range i.e. 0.2416 CHF/kWh.
+
+```{r sensi-figure, out.width = '100%'}
+#| label: fig-sensitivity
+#| fig-cap: "Impact of electricity prices on annual total cost"
+
+knitr::include_graphics("Figures/sensi.png")
+```
+
+
+The results highlight two key observations:
+
+1. **Initial Cost Reduction**: The initial drop in total cost as electricity price increases suggests a system optimization to mitigate the effect of price changes. This could involve reduced grid electricity usage, increased utilization of alternative technologies, or a shift in operational parameters.
+2. **Gradual Cost Increase**: Beyond the initial optimization, the total cost rises progressively with electricity price increments. This trend indicates that the capacity of the system to adapt its configuration diminishes as electricity prices continue to climb.
+
+
+## Summary of MILP optimization
+To meet the future energy demands of the EPFL campus, various energy conversion technologies were reviewed, considering their environmental impact and sustainability. Technologies examined include boilers, cogeneration, electric boilers, fuel cells, and solar panels. These technologies were linearized in terms of cost and performance and integrated into a Mixed-Integer Linear Programming (MILP) model. Results from the heat recovery section (@sec-NLP) were also included.
+
+The MILP model determined the optimal combination of technologies to minimize total yearly costs (TOTEX). Different scenarios were analyzed, prioritizing either operational costs (OPEX),capital cost (CAPEX) or environmental impact (ENVEX). @tbl-KPI-comp illustrates how these objectives affect different key performance indicators (KPIs). The KPIs are similar when minimizing TOTEX, OPEX, or capital costs (CAPEX). However, minimizing environmental impact reduces CO$_2$ emissions but significantly increases total costs due to the installation and use of advanced technologies like fuel cells.
+
+```{r KPI-comparison}
+#| label: tbl-KPI-comp
+#| tbl-cap: "Summary of key performance indicator for the MILP model"
+
+min_TOTEX <- pd$read_pickle("codes_04_energy_system_integration//results//basecase.pkl")
+min_OPEX <- pd$read_pickle("codes_04_energy_system_integration//results//scenario1.pkl")
+min_ENVEX <- pd$read_pickle("codes_04_energy_system_integration//results//scenario2.pkl")
+min_CAPEX <- pd$read_pickle("codes_04_energy_system_integration//results//scenario3.pkl")
+
+OPEX <-   rbind((min_TOTEX$OpCost),(min_OPEX$OpCost),(min_ENVEX$OpCost),(min_CAPEX$OpCost))
+CAPEX <- rbind((min_TOTEX$InvCost),(min_OPEX$InvCost),(min_ENVEX$InvCost),(min_CAPEX$InvCost))
+ENVEX <- rbind((min_TOTEX$ENVEX),(min_OPEX$ENVEX),(min_ENVEX$ENVEX),(min_CAPEX$ENVEX))
+co2_emission <- rbind(sum(min_TOTEX$CO2_emission),sum(min_OPEX$CO2_emission),sum(min_ENVEX$CO2_emission),sum(min_CAPEX$CO2_emission))
+
+KPI_df <- data.frame(
+  Objective = c("min TOTEX","min OPEX","min ENVEX","min CAPEX"),
+  TOTEX = CAPEX + OPEX + ENVEX,
+  CAPEX = CAPEX,
+  OPEX = OPEX,
+  ENVEX = ENVEX,
+  CO2 = co2_emission/1e6
+)
+reactable(KPI_df, resizable = FALSE,
+  sortable = TRUE, outlined = TRUE, striped = TRUE,
+  columns = list(
+    Objective = colDef(style = list(fontWeight = "bold")),
+    InvCost = colDef(name = "TOTEX [CHF/year]", align = "center", format = colFormat(digits = 0, separators =  TRUE)),
+    InvCost.1 = colDef(name = "CAPEX [CHF/year]", align = "center", format = colFormat(digits = 0, separators =  TRUE)),
+    OpCost = colDef(name = "OPEX [CHF/year]", align = "center", format = colFormat(digits = 0, separators =  TRUE)),
+    ENVEX = colDef(name = "ENVEX [CHF/year]", align = "center", format = colFormat(digits = 0, separators =  TRUE)),
+    CO2 = colDef(name = "CO<sub>2</sub> emissions [tonnes/year]", align = "center", html = TRUE, minWidth = 130, format = colFormat(digits = 2, separators =  TRUE))
+  )
+)
+```
+
+@tbl-tech-cap-sum summarizes the impact of changing objective on the selection of energy technologies and their installed capacities. It can be seen that cogeneration is always a part of optimal solution with different installed capacity, regardless of objective function. This is because cogeneration units are highly efficient and provide energy at the expense of low emissions and low cost. On the other end, SOFC are only preferred when the objective is to minimize the environmental impact, as was expected due to high investment as well as operational costs of fuel cells running on H$_2$. Electric boilers are also favored in most cases except when the objective is to minimize the cost, due to relatively higher cost of electricity compared to natural gas. 
+
+```{r summary-tech-capac}
+#| label: tbl-tech-cap-sum
+#| tbl-cap: "Summary of optimum energy technologies and their installed capacities for different scenarios"
+
+library(data.table)
+tech_name <- c(
+  "Boiler", "Cogeneration", "EB", "ElecGridBuy", "ElecGridSell", 
+  "HydrogenGrid", "NatGasGrid", "PV", "SOFC", "VentHP", "VentHX")
+selected_variables <- c("Boiler", "Cogeneration", "EB", "PV", "SOFC")
+scenarios <- c("min TOTEX","min OPEX","min CAPEX","min ENVEX")
+# Base case
+mult_bc <- as.numeric(unlist(py_to_r(min_TOTEX$mult)))
+names(mult_bc) <- tech_name
+mult_bc <- mult_bc[selected_variables]
+# Min OPEX
+mult_OPEX <- as.numeric(unlist(py_to_r(min_OPEX$mult)))
+names(mult_OPEX) <- tech_name
+mult_OPEX <- mult_OPEX[selected_variables]
+# Min CAPEX
+mult_CAPEX <- as.numeric(unlist(py_to_r(min_CAPEX$mult)))
+names(mult_CAPEX) <- tech_name
+mult_CAPEX <- mult_CAPEX[selected_variables]
+# Min ENVEX
+mult_ENVEX <- as.numeric(unlist(py_to_r(min_ENVEX$mult)))
+names(mult_ENVEX) <- tech_name
+mult_ENVEX <- mult_ENVEX[selected_variables]
+
+mult_factors <- c(Boiler = 10, Cogeneration = 10, EB = 10, PV = 3/1000, SOFC = 82.73/1000)
+
+capacity_bc <- mult_bc * mult_factors[names(mult_bc)] 
+capacity_OPEX <- mult_OPEX * mult_factors[names(mult_OPEX)] 
+capacity_CAPEX <- mult_CAPEX * mult_factors[names(mult_CAPEX)] 
+capacity_ENVEX <- mult_ENVEX * mult_factors[names(mult_ENVEX)]
+
+
+df <- data.frame( 
+  Scenario = rep(scenarios, each = length(selected_variables)), 
+  Technology = rep(selected_variables, times = length(scenarios)), 
+  mult = c(mult_bc, mult_OPEX, mult_CAPEX, mult_ENVEX), 
+  Capacity = c(capacity_bc, capacity_OPEX, capacity_CAPEX, capacity_ENVEX)
+)
+
+df2 <- df
+
+# Create the "Tech USED" column
+tech_used <- sapply(scenarios, function(scenario) {
+  tech_names <- df$Technology[df$Scenario == scenario & df$mult > 0]
+  paste(tech_names, collapse = ", ")
+})
+
+# Add the "Tech USED" column to the data frame
+df2$Tech_USED <- rep(tech_used, each = length(selected_variables))
+
+data_head <- unique(df2[, c("Scenario", "Tech_USED")])
+
+reactable(data_head,
+          highlight = TRUE,
+          columns = list(
+            Scenario = colDef(
+              details = function(index) {
+                tech_data <- df[df$Scenario == data_head$Scenario[index],]
+                tech_data <- tech_data[ , !names(tech_data) %in% "Scenario"]
+                htmltools::div(style = "padding: 1rem",
+                reactable(tech_data,
+                highlight = TRUE,
+                sortable = TRUE,
+                outlined = TRUE,
+                striped = TRUE,
+                rownames = FALSE,
+                columns = list(
+                  mult = colDef(cell= function(value){if (value == 0) "\u274c No" else "\u2714\ufe0f Yes"
+                  }, name = 'Install technology', align = "center"),
+                  Capacity = colDef(name = 'Installed capacity [MW]', align = "center", format = colFormat(digits = 2))
+                ))
+                )
+              }
+            ),
+          Tech_USED = colDef(name = "Technologies Installed")
+          )
+)
+```
+
+For multi-objective optimization, a Pareto-front is used to compare the trade off between environmental costs and capital investment. Minimizing capital costs favored traditional technologies like boilers and cogeneration powered by natural gas. Conversely, minimizing environmental impact required significant investment in advanced technologies such as fuel cells and PV panels, which currently incur high costs. The analysis highlighted distinct optimal solutions: cost-efficient yet carbon-intensive options, and greener but more expensive alternatives, emphasizing the trade-offs in sustainable energy system design. The effect of electricity price on TOTEX is evaluated by sensitivity study. In general, with increasing electrical prices the annual total cost increased, but because of flexibility of system due to multiple technologies, the change in TOTEX is not too drastic.
+

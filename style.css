@@ -1,0 +1,36 @@
+p.caption {
+  color: #777;
+  margin-top: 10px;
+}
+p code {
+  white-space: inherit;
+}
+pre {
+  word-break: normal;
+  word-wrap: normal;
+}
+pre code {
+  white-space: inherit;
+}
+.quarto-title-block .quarto-title-banner {
+  position: relative;
+  height: 85%;
+  background-color:#2f4f4f;
+}
+.quarto-title-block .quarto-title-banner {
+  background-image: url(EPFL_logo.png);
+  background-size: 250px;
+  background-position: left;
+  background-repeat: no-repeat;
+  padding-left: 10px;
+  background-origin: content-box;
+}
+
+span.supsub {display: inline-block;}
+span.supsub sup,
+span.supsub sub {
+    position: relative;
+    display: block;
+    line-height: 0.8;
+    font-size: 0.75em;
+}

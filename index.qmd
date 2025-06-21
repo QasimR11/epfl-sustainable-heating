@@ -1,0 +1,34 @@
+---
+advisor: Prof. François Maréchal
+unitname:
+  faculty: School of Engineering
+  institute: Mechanical Engineering
+  laboratory: "Industrial Process and Energy Systems Engineering"
+---
+
+# Abstract
+This report presents a comprehensive analysis of energy optimization strategies for the EPFL campus, encompassing energy demand analysis, heat recovery, heat pump (HP) modeling, and energy system integration. 
+
+The study identifies energy demands across campus buildings, emphasizing critical factors such as thermal conductivity ($\mathrm{k_{th}}$) and solar gain coefficients ($\mathrm{k_{sun}}$). A detailed analysis suggests that targeted renovations, combined with optimized parameters, can reduce overall heating demand by a significant margin.
+
+Heat recovery systems are analyzed for their ability to reclaim waste heat from campus processes. Preliminary calculations indicate close to 50% reduction in heat load of the campus in selected scenarios, offering substantial opportunities to reduce waste and improve system efficiency.
+
+A two-stage heat pump system, designed to provide up to 6 MW of thermal capacity, is modeled to address heating demands. The proposed system demonstrates a coefficient of performance (COP) exceeding 4 under optimal conditions, underscoring its suitability for large-scale applications like the EPFL campus. This advanced system incorporates a competitive working fluid (R-290), further enhancing its efficiency.
+
+Finally, an integrated energy system is proposed, combining renewable energy sources and advanced control algorithms to optimize campus-wide energy use through Multi-Integer Linear Programming. Projections highlight the potential for significant reductions in energy consumption and greenhouse gas emissions, aligning with EPFL’s sustainability goals.
+
+This integrated approach demonstrates the feasibility of achieving sustainable energy solutions while maintaining high performance and cost efficiency. The findings underscore the critical role of advanced modeling and integration in modern energy systems.
+
+# Preface
+The following report outlines the different aspects an energy consultant has to consider when given a project. In this case the heating system of the EPFL campus has to be renewed, due to it reaching its operational lifetime. 
+The analysis begins with an assessment of the campus's energy demands to establish the requirements for the new heating system. Next, a nonlinear programming optimization is applied to determine the optimal heat exchanger area for various heat recovery options. A two-stage heat pump is then modeled using the working fluids R-290 and R-1234yf, evaluating their economic, environmental, and thermodynamic performance to identify the most suitable choice. Finally, a mixed-integer linear programming (MILP) optimization explores the integration of different energy technologies, aiming to identify the optimal configuration for future implementation.
+
+# Introduction
+
+The energy system of EPFL currently comprises three interconnected components: heating, cooling, and electricity, each powered by an aggregate of systems. However, the existing heating system, installed in the early 1970s, is nearing the end of its operational lifetime and can no longer support the growing energy demands of the campus. The rapid expansion of infrastructure at EPFL has significantly increased the campus's energy requirements, necessitating an efficient, modern replacement for the outdated heating system [@coccolo2015epfl].
+
+In response, the infrastructure management team at EPFL is actively exploring replacement options. Each potential solution is evaluated based on three critical performance metrics: economic viability, energetic efficiency, and environmental impact. The aim is to identify a solution that combines maximum energy efficiency with minimal infrastructure and operational costs, while also achieving a significant reduction in carbon emissions. This task is not only vital for meeting the campus's current needs but also for ensuring its alignment with future sustainability goals.
+
+This report addresses the task of optimizing EPFL's heating system, structured as part of a five-stage project. The initial step involves analyzing the heating energy demands of the campus to establish a comprehensive understanding of current and projected requirements. The focus then shifts to exploring opportunities for heat recovery, particularly from the ventilation air, as a means to enhance system efficiency and reduce waste. Subsequently, a two-stage heat pump model is developed to assess its performance and to evaluate the suitability of various working fluids in terms of cost, efficiency, and environmental performance. These efforts are complemented by the integration of additional technological utilities, such as photovoltaic panels or electric boilers into the campus's energy infrastructure. The project concludes with an evaluation of these solutions under different scenarios, enabling a comprehensive comparison of their benefits and trade-offs.
+
+The proposed approach aims to provide EPFL with a sustainable, efficient, and cost-effective heating system that addresses both current challenges and future opportunities. By combining technical analysis with scenario-based evaluations, this report seeks to offer actionable insights and recommendations for the administration, ultimately contributing to EPFL’s vision of energy innovation and sustainability.

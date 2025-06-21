@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.30">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="MOES project report">
+
+<title>3&nbsp; NLP Optimization of Energy Systems – Modeling and optimization of energy systems</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./03.00-HP_modeling.html" rel="next">
+<link href="./01.00-Energy_demand.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-de070a7b0ab54f8780927367ac907214.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-6c5e161c8cd73323fda144effafce1d1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<script src="site_libs/core-js-2.5.3/shim.min.js"></script>
+<script src="site_libs/react-18.2.0/react.min.js"></script>
+<script src="site_libs/react-18.2.0/react-dom.min.js"></script>
+<script src="site_libs/reactwidget-2.0.0/react-tools.js"></script>
+<link href="site_libs/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet">
+<script src="site_libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+<link href="site_libs/reactable-0.4.4/reactable.css" rel="stylesheet">
+<script src="site_libs/reactable-binding-0.4.4/reactable.js"></script>
+<script src="site_libs/plotly-binding-4.10.4/plotly.js"></script>
+<script src="site_libs/typedarray-0.1/typedarray.min.js"></script>
+<script src="site_libs/jquery-3.5.1/jquery.min.js"></script>
+<link href="site_libs/crosstalk-1.2.1/css/crosstalk.min.css" rel="stylesheet">
+<script src="site_libs/crosstalk-1.2.1/js/crosstalk.min.js"></script>
+<link href="site_libs/plotly-htmlwidgets-css-2.11.1/plotly-htmlwidgets.css" rel="stylesheet">
+<script src="site_libs/plotly-main-2.11.1/plotly-latest.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top quarto-banner">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./02.00-Heat_recovery.html"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">NLP Optimization of Energy Systems</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title"><span id="sec-NLP" class="quarto-section-identifier"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">NLP Optimization of Energy Systems</span></span></h1>
+                  <div>
+        <div class="description">
+          MOES project report
+        </div>
+      </div>
+                </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">Modeling and optimization of energy systems</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Abstract</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01.00-Energy_demand.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Energy demand of the EPFL campus</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02.00-Heat_recovery.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">NLP Optimization of Energy Systems</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03.00-HP_modeling.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Modelling of a heat pump and data reconciliation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04.00-energy_system_integration.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Energy system optimization</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-Conclusions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Conclusions</span></span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#sec-Heat_recovery_intro" id="toc-sec-Heat_recovery_intro" class="nav-link active" data-scroll-target="#sec-Heat_recovery_intro"><span class="header-section-number">3.1</span> Introduction</a></li>
+  <li><a href="#sec-Reference" id="toc-sec-Reference" class="nav-link" data-scroll-target="#sec-Reference"><span class="header-section-number">3.2</span> Reference case</a>
+  <ul class="collapse">
+  <li><a href="#sec-Eq-Ref" id="toc-sec-Eq-Ref" class="nav-link" data-scroll-target="#sec-Eq-Ref"><span class="header-section-number">3.2.1</span> Model equations and constraints</a></li>
+  <li><a href="#optimization-results" id="toc-optimization-results" class="nav-link" data-scroll-target="#optimization-results"><span class="header-section-number">3.2.2</span> Optimization Results</a></li>
+  </ul></li>
+  <li><a href="#data-center-heat-recovery" id="toc-data-center-heat-recovery" class="nav-link" data-scroll-target="#data-center-heat-recovery"><span class="header-section-number">3.3</span> Data Center heat recovery</a>
+  <ul class="collapse">
+  <li><a href="#assumptions" id="toc-assumptions" class="nav-link" data-scroll-target="#assumptions"><span class="header-section-number">3.3.1</span> Assumptions</a></li>
+  <li><a href="#model-equations-and-constraints" id="toc-model-equations-and-constraints" class="nav-link" data-scroll-target="#model-equations-and-constraints"><span class="header-section-number">3.3.2</span> Model equations and constraints</a></li>
+  <li><a href="#optimization-results-1" id="toc-optimization-results-1" class="nav-link" data-scroll-target="#optimization-results-1"><span class="header-section-number">3.3.3</span> Optimization results</a></li>
+  <li><a href="#annual-savings-and-payback-time" id="toc-annual-savings-and-payback-time" class="nav-link" data-scroll-target="#annual-savings-and-payback-time"><span class="header-section-number">3.3.4</span> Annual savings and payback time</a></li>
+  </ul></li>
+  <li><a href="#air-ventilation-heat-recovery" id="toc-air-ventilation-heat-recovery" class="nav-link" data-scroll-target="#air-ventilation-heat-recovery"><span class="header-section-number">3.4</span> Air Ventilation Heat Recovery</a>
+  <ul class="collapse">
+  <li><a href="#sec-Vent-Assumptions" id="toc-sec-Vent-Assumptions" class="nav-link" data-scroll-target="#sec-Vent-Assumptions"><span class="header-section-number">3.4.1</span> Assumptions</a></li>
+  <li><a href="#sec-Vent-eq" id="toc-sec-Vent-eq" class="nav-link" data-scroll-target="#sec-Vent-eq"><span class="header-section-number">3.4.2</span> Model equations and constraints</a></li>
+  <li><a href="#optimization-results-2" id="toc-optimization-results-2" class="nav-link" data-scroll-target="#optimization-results-2"><span class="header-section-number">3.4.3</span> Optimization results</a></li>
+  <li><a href="#annual-savings-and-payback-time-1" id="toc-annual-savings-and-payback-time-1" class="nav-link" data-scroll-target="#annual-savings-and-payback-time-1"><span class="header-section-number">3.4.4</span> Annual savings and payback time</a></li>
+  </ul></li>
+  <li><a href="#air-ventilation-with-heat-pump-integration" id="toc-air-ventilation-with-heat-pump-integration" class="nav-link" data-scroll-target="#air-ventilation-with-heat-pump-integration"><span class="header-section-number">3.5</span> Air Ventilation with Heat Pump Integration</a>
+  <ul class="collapse">
+  <li><a href="#assumptions-1" id="toc-assumptions-1" class="nav-link" data-scroll-target="#assumptions-1"><span class="header-section-number">3.5.1</span> Assumptions</a></li>
+  <li><a href="#model-equation-and-constraints" id="toc-model-equation-and-constraints" class="nav-link" data-scroll-target="#model-equation-and-constraints"><span class="header-section-number">3.5.2</span> Model equation and constraints</a></li>
+  <li><a href="#optimization-results-3" id="toc-optimization-results-3" class="nav-link" data-scroll-target="#optimization-results-3"><span class="header-section-number">3.5.3</span> Optimization results</a></li>
+  <li><a href="#annual-savings-and-payback-time-2" id="toc-annual-savings-and-payback-time-2" class="nav-link" data-scroll-target="#annual-savings-and-payback-time-2"><span class="header-section-number">3.5.4</span> Annual savings and payback time</a></li>
+  </ul></li>
+  <li><a href="#summary-of-optimization-study" id="toc-summary-of-optimization-study" class="nav-link" data-scroll-target="#summary-of-optimization-study"><span class="header-section-number">3.6</span> Summary of optimization study</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+
+<section id="sec-Heat_recovery_intro" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="sec-Heat_recovery_intro"><span class="header-section-number">3.1</span> Introduction</h2>
+<p>Heat recovery is an effective strategy to reduce operational costs by capturing and reusing heat from outgoing streams. However, this approach requires additional capital investment for the installation of heat exchangers. The objective of this section is to evaluate the costs of EPFL’s current heating system (reference case) and compare them with various heat recovery options. All analyses focus exclusively on medium-temperature buildings. The external environmental conditions used in this study are derived from the clustering method discussed in <a href="01.00-Energy_demand.html#sec-TypicalPeriods" class="quarto-xref"><span>Section 2.5</span></a> and are listed in <a href="#tbl-typical-periods-kmeans" class="quarto-xref">Table&nbsp;<span>3.1</span></a>.</p>
+<div class="cell">
+<div id="tbl-typical-periods-kmeans" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-typical-periods-kmeans-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3.1: Typical periods defined using k-means
+</figcaption>
+<div aria-describedby="tbl-typical-periods-kmeans-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-41fc279d93b8cfb77416" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-41fc279d93b8cfb77416">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Unnamed..0":[1,2,3,4,5],"Temp":[10.9725589225589,1.95072115384615,10.5717,-9.2,16],"Irr":[0.387941077441077,0.0527007211538462,0.0606270000000001,0,0.145350489422166],"No_hours":[595,829,1001,1,6334],"Heating":[668212.164838695,12611731.8401397,6383595.40350282,27270.810189,0]},"columns":[{"id":"Unnamed..0","name":"Cluster No.","type":"numeric","align":"center"},{"id":"Temp","name":"Temperature [°C]","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"align":"center"},{"id":"Irr","name":"Irradiation [kW/m2]","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"align":"center"},{"id":"No_hours","name":"Operating hours [h]","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"align":"center"},{"id":"Heating","name":"Heat load [kWh]","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"align":"center"}],"sortable":false,"highlight":true,"outlined":true,"striped":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"69b70e8da77ca2d998b1cb96bc92c5eb"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>For all the different cases presented, the following data is used:</p>
+<ul>
+<li><span class="math inline">\(\mathrm{T_{int}}\)</span> = 21°C, indoor set temperature in EPFL</li>
+<li><span class="math inline">\(\mathrm{m_{air}}\)</span> = 2.5 <span class="math inline">\(\mathrm{m^3/m^2h}\)</span></li>
+<li><span class="math inline">\(\mathrm{m_{air,out}}\)</span> = 2 <span class="math inline">\(\mathrm{m^3/m^2h}\)</span></li>
+<li><span class="math inline">\(\mathrm{C_{P,air}}\)</span> = 1.152 <span class="math inline">\(\mathrm{kJ/m^3K}\)</span></li>
+<li><span class="math inline">\(\mathrm{C_{p,H_2O}}\)</span> = 4.180 <span class="math inline">\(\mathrm{kJ/kg K}\)</span></li>
+<li>Overall heat transfer coefficient for the HEX:
+<ul>
+<li>air-air HEX: U = 0.025 <span class="math inline">\(\mathrm{kW/m^2K}\)</span><br>
+</li>
+</ul></li>
+<li><span class="math inline">\(\mathrm{\eta_{carnot}}\)</span> = 0.55, Carnot efficiency of heating heat pumps</li>
+<li><span class="math inline">\(\mathrm{Cel}\)</span> = 0.20 <span class="math inline">\(\mathrm{CHF/kWh}\)</span> , operating cost for buying electricity</li>
+<li><span class="math inline">\(\mathrm{i}\)</span> = 0.06, Interest rate</li>
+<li><span class="math inline">\(\mathrm{n}\)</span> = 20 y, Life-time</li>
+<li><span class="math inline">\(\mathrm{F_{BM,HE}}\)</span> = 4.74, Bare module factor of the heat exchanger</li>
+<li><span class="math inline">\(\mathrm{F_{BM,HP}}\)</span> = 2.0, Bare module factor of the heat pump</li>
+<li><span class="math inline">\(\mathrm{I_{New}}\)</span> = 605.7, Chemical engineering plant cost index (2015)</li>
+<li><span class="math inline">\(\mathrm{I_{Ref}}\)</span> = 394.1, Chemical engineering plant cost index (2000)</li>
+<li><span class="math inline">\(\mathrm{MS_{New}}\)</span> = 562, Marshall and Swift plant cost index (2017)</li>
+<li><span class="math inline">\(\mathrm{MS_{Ref}}\)</span> = 400, Marshall and Swift plant cost index (2000)</li>
+<li><span class="math inline">\(\mathrm{a_{HE}}\)</span> = 1200, Heat exchanger cost parameter</li>
+<li><span class="math inline">\(\mathrm{b_{HE}}\)</span> = 0.6, Heat exchanger cost parameter</li>
+<li><span class="math inline">\(\mathrm{a_{HP}}\)</span> = 3400, Heat pump cost parameter</li>
+<li><span class="math inline">\(\mathrm{b_{HP}}\)</span> = 0.85, Heat pump cost parameter</li>
+</ul>
+</section>
+<section id="sec-Reference" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="sec-Reference"><span class="header-section-number">3.2</span> Reference case</h2>
+<p>For the reference case, the existing heat pumps at EPFL are used to meet the heating demands of medium-temperature buildings by utilizing lake water as a heat source. In this analysis, the operational costs of the current heating system are assessed. Since the heat pumps are already installed, no capital expenditures (CAPEX) are involved, and the total expenditures (TOTEX) are limited to the annual operating costs. The process flow diagram for the reference case is shown in <a href="#fig-reference-flowsheet" class="quarto-xref">Figure&nbsp;<span>3.1</span></a>. The flowsheet only shows values for variables which are assumed to remain constant throughout the year.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-reference-flowsheet" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-reference-flowsheet-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Figures/Reference-case-Model.png" class="img-fluid figure-img" style="width:75.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-reference-flowsheet-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3.1: Process flowsheet for reference case. For values of variable dependent on typical periods see <a href="#tbl-Reference-Case-Streams" class="quarto-xref">Table&nbsp;<span>3.2</span></a>, <a href="#tbl-Reference_Case_Units" class="quarto-xref">Table&nbsp;<span>3.3</span></a>
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="sec-Eq-Ref" class="level3" data-number="3.2.1">
+<h3 data-number="3.2.1" class="anchored" data-anchor-id="sec-Eq-Ref"><span class="header-section-number">3.2.1</span> Model equations and constraints</h3>
+<p>The heating requirement of EPFL <span class="math inline">\(\mathrm{Q_{EPFL}}\)</span> are met by the circulation of a heating fluid (EPFLMedium). Energy balance on the heating fluid is given by <a href="#eq-Q_EPFL" class="quarto-xref">eq&nbsp;<span>3.1</span></a>: <span id="eq-Q_EPFL"><span class="math display">\[
+\mathrm{Q_{EPFL}}[t] = (\mathrm{M C_{P}})[t](\mathrm{EPFLMediumT} - \mathrm{EPFLMediumOut}) \times \Delta \mathrm{h}[t]
+\tag{3.1}\]</span></span></p>
+<p>The following nomenclature is used with <a href="#eq-Q_EPFL" class="quarto-xref">eq&nbsp;<span>3.1</span></a>.</p>
+<ul>
+<li><span class="math inline">\(\mathrm{M}\)</span> is the mass flow rate of heating fluid [<span class="math inline">\(\mathrm{kg\cdot s^{-1}}\)</span>].</li>
+<li><span class="math inline">\(\mathrm{C_p}\)</span> is the specific heat capacity [<span class="math inline">\(\mathrm{kJ\cdot kg^{-1}\cdot K^{-1}}\)</span>].</li>
+<li><span class="math inline">\(\Delta h\)</span> is the number of operating hours in a given period [<span class="math inline">\(\mathrm{hr}\)</span>].</li>
+<li><span class="math inline">\(\mathrm{EPFLMediumT}\)</span> is the supply temperature of heating medium to buildings [<span class="math inline">\(\mathrm{°C}\)</span>].</li>
+<li><span class="math inline">\(\mathrm{EPFLMediumOut}\)</span> is the return temperature of heating medium from buildings [<span class="math inline">\(\mathrm{°C}\)</span>].</li>
+</ul>
+<p>Because no information was available on heating fluid the product of specific heat and mass flow are lumped together in the model in a sinlge term. The number of operating hours <span class="math inline">\(\Delta h\)</span> is used in this equation to account for the fact that <span class="math inline">\(\mathrm{Q_{EPFL}}\)</span> is in kWh. The term <span class="math inline">\([t]\)</span> next to a symbol indicates the quantities that depend on cluster data.</p>
+<p>Simialry, energy balance on evaporator and condenser is given by <a href="#eq-Q-evap" class="quarto-xref">eq&nbsp;<span>3.2</span></a> and <a href="#eq-Q-Cond" class="quarto-xref">eq&nbsp;<span>3.3</span></a> respectively: <span id="eq-Q-evap"><span class="math display">\[
+\mathrm{Q_{evap}}[t] = \mathrm{m_{H_2O}}[t] \mathrm{C_{p,H_2O}} (\mathrm{THPhighin} - \mathrm{THPhighout})
+\tag{3.2}\]</span></span></p>
+<p><span id="eq-Q-Cond"><span class="math display">\[
+\mathrm{Q_{cond}}[t] = \mathrm{MC_{P}}[t](\mathrm{EPFLMediumT} - \mathrm{EPFLMediumOut})
+\tag{3.3}\]</span></span></p>
+<p>where,</p>
+<ul>
+<li><span class="math inline">\(\mathrm{Q_{evap}}\)</span> is the duty of evaporator of heat pump [<span class="math inline">\(\mathrm{kW}\)</span>].</li>
+<li><span class="math inline">\(\mathrm{Q_{cond}}\)</span> is the duty of condeser of heat pump [<span class="math inline">\(\mathrm{kW}\)</span>].</li>
+<li><span class="math inline">\(\mathrm{m_{H_2O}}\)</span> is the mass flow rate of lake water flowing into evaporator of heat pump [<span class="math inline">\({kg\cdot s^{-1}}\)</span>].</li>
+<li><span class="math inline">\(\mathrm{C_{p,H_2O}}\)</span> is the heat capacity of liquid water defined in <a href="#sec-Heat_recovery_intro" class="quarto-xref"><span>Section 3.1</span></a> .</li>
+<li><span class="math inline">\(\mathrm{THPHighin}\)</span> is the temperature of lake water entering into evaporator [<span class="math inline">\(\mathrm{°C}\)</span>].</li>
+<li><span class="math inline">\(\mathrm{THPHighout}\)</span> is the temperature of lake water leaving the evaporator [<span class="math inline">\(\mathrm{°C}\)</span>].</li>
+</ul>
+<p>As heat pumps transfer energy from low temperature reservoir (lake in this case) to high temperature (buildings here), work needs to be supplied. This work is provided in terms of electrical energy in the compressor and is calculated using <a href="#eq-Electricity" class="quarto-xref">eq&nbsp;<span>3.4</span></a> <span id="eq-Electricity"><span class="math display">\[
+\mathrm{E}[t] = \mathrm{Q_{cond}}[t] - \mathrm{Q_{evap}}[t]
+\tag{3.4}\]</span></span></p>
+<p>Also, the electrical energy requirement is related to coefficient of perfromance of heat pump by <a href="#eq-Electricity2" class="quarto-xref">eq&nbsp;<span>3.5</span></a> <span id="eq-Electricity2"><span class="math display">\[
+\mathrm{COP}[t] = \frac{\mathrm{Q_cond}[t]}{\mathrm{E}[t]}
+\tag{3.5}\]</span></span></p>
+<p>The coefficient of performance is related to carnott efficieny <span class="math inline">\(\eta_{\mathrm{Carnot}}\)</span> of heat pump by <a href="#eq-COP-NLP" class="quarto-xref">eq&nbsp;<span>3.6</span></a> <span id="eq-COP-NLP"><span class="math display">\[
+\mathrm{COP}[t] = \eta_{\mathrm{Carnot}}\frac{\Delta \mathrm{T_{cond}}}{\Delta \mathrm{T_{cond}}-\Delta \mathrm{T_{evap}}}
+\tag{3.6}\]</span></span></p>
+<p>where <span class="math inline">\(\Delta \mathrm{T_{cond}}\)</span> and <span class="math inline">\(\Delta \mathrm{T_{evap}}\)</span> are the log mean temperature difference of condenser and evaporator of heat pump and are given by <a href="#eq-LMTD-Cond-HP" class="quarto-xref">eq&nbsp;<span>3.7</span></a> and <a href="#eq-LMTD-Evap-HP" class="quarto-xref">eq&nbsp;<span>3.8</span></a> respectively. For these equations, temperature in absolute scale [K] must be used. <span id="eq-LMTD-Cond-HP"><span class="math display">\[
+\Delta \mathrm{T_{cond}} = \frac{(\mathrm{EPFLMediumT} - \mathrm{EPFLMediumOut})}{\ln(\mathrm{EPFLMediumT}) - \ln(\mathrm{EPFLMediumOut})}
+\tag{3.7}\]</span></span></p>
+<p><span id="eq-LMTD-Evap-HP"><span class="math display">\[
+\Delta \mathrm{T_{evap}} = \frac{(\mathrm{THPhighin} - \mathrm{THPhighout})}{\ln(\mathrm{THPhighin}) - \ln(\mathrm{THPhighout})}
+\tag{3.8}\]</span></span></p>
+<p>A constraint is added to the model to ensure that all the heating requirements are provided by condenser (<a href="#eq-Constraint-heating-reference" class="quarto-xref">eq&nbsp;<span>3.9</span></a>) <span id="eq-Constraint-heating-reference"><span class="math display">\[
+\mathrm{Q_{EPFL}}[t] = \mathrm{Q_{cond}}[t] \times \Delta \mathrm{h}[t]
+\tag{3.9}\]</span></span></p>
+<p>The operating cost for the reference case is given by <a href="#eq-OPEX-ref-case" class="quarto-xref">eq&nbsp;<span>3.10</span></a> <span id="eq-OPEX-ref-case"><span class="math display">\[
+\mathrm{OPEX} = \sum_{t=1}^{n}(\mathrm{C_{el}}\times \mathrm{E}[t] \times \Delta \mathrm{h}[t])
+\tag{3.10}\]</span></span></p>
+<p>where <span class="math inline">\(\mathrm{C_{el}}\)</span> is the cost of electricity, defined in <a href="#sec-Heat_recovery_intro" class="quarto-xref"><span>Section 3.1</span></a>. The OPEX is calculated by summing up the cost of electrical energy over all typical periods and is given in <span class="math inline">\(\mathrm{CHF/year}\)</span></p>
+</section>
+<section id="optimization-results" class="level3" data-number="3.2.2">
+<h3 data-number="3.2.2" class="anchored" data-anchor-id="optimization-results"><span class="header-section-number">3.2.2</span> Optimization Results</h3>
+<p>The optimal solution for the stream flow rates and temperature is tabulated in <a href="#tbl-Reference-Case-Streams" class="quarto-xref">Table&nbsp;<span>3.2</span></a> for each of the typical periods.</p>
+<div class="cell">
+<div id="tbl-Reference-Case-Streams" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-Reference-Case-Streams-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3.2: Stream data for reference case for each typical period
+</figcaption>
+<div aria-describedby="tbl-Reference-Case-Streams-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-dc083f9e925d543a9f49" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-dc083f9e925d543a9f49">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Variable":["m<sub>Lake<\/sub> [kg/s]","m<sub>EPFL<\/sub> [kg/s]"],"Flow1":[51.0847258535752,32.0870187178872],"Flow2":[692.012361590145,434.662479407203],"Flow3":[290.084771926914,182.206233880405],"Flow4":[1240.4855100968,779.166005428571]},"columns":[{"id":"Variable","name":"Variable","type":"character","html":true,"minWidth":140},{"id":"Flow1","name":"Cluster 1","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Flow2","name":"Cluster 2","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Flow3","name":"Cluster 3","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Flow4","name":"Cluster 4","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}}],"sortable":false,"resizable":true,"highlight":true,"outlined":true,"striped":true,"nowrap":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"11a1296feb6080bbb60b91b0c2fa3f87"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>The energy demands for the process i.e.&nbsp;the heat load for condenser and evaporator, and the electrical energy required for compressor as well as the COP for heat pump are listed in <a href="#tbl-Reference_Case_Units" class="quarto-xref">Table&nbsp;<span>3.3</span></a>.</p>
+<div class="cell">
+<div id="tbl-Reference_Case_Units" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-Reference_Case_Units-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3.3: Energy requiremnet and COP of heat pump for reference case for each typical period
+</figcaption>
+<div aria-describedby="tbl-Reference_Case_Units-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-96273fbeff34e8c64d1d" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-96273fbeff34e8c64d1d">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Unit":["W-101","W-102","V-101","Heat Pump"],"Variable":["Q<sub>evap<\/sub> [kW]","Q<sub>cond<\/sub> [kW]","E [kW]","COP [-]"],"Qevap1":[854.136616271778,1123.04565512605,268.909038854272,4.17630310944904],"Qevap2":[11570.4466857872,15213.1867792521,3642.74009346489,4.17630310944904],"Qevap3":[4850.217386618,6377.21818581419,1527.00079919618,4.17630310944904],"Qevap4":[20740.9177288185,27270.81019,6529.89246118147,4.17630310944904]},"columns":[{"id":"Unit","name":"Unit","type":"character"},{"id":"Variable","name":"Variable","type":"character","html":true},{"id":"Qevap1","name":"Cluster 1","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Qevap2","name":"Cluster 2","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Qevap3","name":"Cluster 3","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Qevap4","name":"Cluster 4","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}}],"sortable":false,"resizable":true,"highlight":true,"outlined":true,"striped":true,"nowrap":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"161357ea4f2c9ec7b22a4567ffb1733b"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>The log mean temperature differences (LMTD) for the condenser and evaporator in the heat pumps are 320.33 K and 278.15 K, respectively. As the stream temperatures shown in <a href="#fig-reference-flowsheet" class="quarto-xref">Figure&nbsp;<span>3.1</span></a> remain constant throughout the year, the log temperature differences are uniform across all typical periods.</p>
+<p>The annual operating cost (OPEX) for the reference case is 942 978 <span class="math inline">\(\frac{\mathrm{CHF}}{\mathrm{year}}\)</span>. This cost is specific to medium-temperature buildings and does not account for the heating requirements of low-temperature buildings.</p>
+</section>
+</section>
+<section id="data-center-heat-recovery" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="data-center-heat-recovery"><span class="header-section-number">3.3</span> Data Center heat recovery</h2>
+<p>In this scenario, the heat generated by the EPFL data center is proposed to preheat the EPFLMedium, reducing the energy demand in the condenser. This setup requires the installation of an additional heat exchanger to facilitate heat transfer between the EPFLMedium and the stream leaving the data center. The process flow diagram with associated variables is shown in <a href="#fig-flowsheet-datacenter" class="quarto-xref">Figure&nbsp;<span>3.2</span></a>.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-flowsheet-datacenter" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-flowsheet-datacenter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Figures/DataCenter-Model.png" class="img-fluid figure-img" style="width:75.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-flowsheet-datacenter-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3.2: Process flowsheet for heat recovery from data center. For values of variable dependent on typical periods see <a href="#tbl-Data-center-stream-table" class="quarto-xref">Table&nbsp;<span>3.4</span></a>, <a href="#tbl-Data-center-heat-load" class="quarto-xref">Table&nbsp;<span>3.5</span></a>
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="assumptions" class="level3" data-number="3.3.1">
+<h3 data-number="3.3.1" class="anchored" data-anchor-id="assumptions"><span class="header-section-number">3.3.1</span> Assumptions</h3>
+<p>For the modeling of heat recovery from data center following assumptions were made:</p>
+<ul>
+<li>The exisiting heat exchanger for removing heat from data center can be used to cool down <span class="math inline">\(\mathrm{T_{DC,out}}\)</span> to the required temperature (17 °C).</li>
+<li>Heat energy produced by data center is constant throughout the year (574 kW).</li>
+</ul>
+</section>
+<section id="model-equations-and-constraints" class="level3" data-number="3.3.2">
+<h3 data-number="3.3.2" class="anchored" data-anchor-id="model-equations-and-constraints"><span class="header-section-number">3.3.2</span> Model equations and constraints</h3>
+<p>Energy balance on heat exchanger for heat recovery of data center is given by <a href="#eq-HEDC-EB1" class="quarto-xref">eq&nbsp;<span>3.11</span></a>. <span id="eq-HEDC-EB1"><span class="math display">\[
+\mathrm{Q_{HEDC}}[t] = (\mathrm{M C_{P}})[t](\mathrm{TRadin}[t] - \mathrm{EPFLMediumOut})
+\tag{3.11}\]</span></span></p>
+<p>where,</p>
+<ul>
+<li><span class="math inline">\(\mathrm{Q_{HEDC}}\)</span> is the heat recovered in data center recovery heat exchanger (W-103) [<span class="math inline">\(\mathrm{kW}\)</span>].</li>
+<li><span class="math inline">\(\mathrm{TRadin}\)</span> is the temperature of heating medium leaving the data center <span class="math inline">\(\mathrm{°C}\)</span></li>
+</ul>
+<p>But this heat must equal the amount of heat extracted from hot stream coming from data center given by <a href="#eq-HEDC-EB2" class="quarto-xref">eq&nbsp;<span>3.12</span></a> <span id="eq-HEDC-EB2"><span class="math display">\[
+\mathrm{Q_{HEDC}}[t] = (\mathrm{m_{DC} c_{P_{DC}}})[t](\mathrm{TDCin} - \mathrm{TDCout}[t])
+\tag{3.12}\]</span></span></p>
+<p>where,</p>
+<ul>
+<li><span class="math inline">\(\mathrm{m_{DC}}\)</span> is the mass flow rate of stream coming from data center [<span class="math inline">\(\mathrm{kg \cdot s^{-1}}\)</span>]</li>
+<li><span class="math inline">\(\mathrm{c_{P_{DC}}}\)</span> is the heat capacity of data center stream [<span class="math inline">\(\mathrm{kJ\cdot kg^{-1}\cdot K^{-1}}\)</span>].</li>
+<li><span class="math inline">\(\mathrm{TDCin}\)</span> is the incoming temperature of data center stream <span class="math inline">\(\mathrm{°C}\)</span>.</li>
+<li><span class="math inline">\(\mathrm{TDCout}\)</span> is the outgoing temperature of data center stream <span class="math inline">\(\mathrm{°C}\)</span>.</li>
+</ul>
+<p>As in the reference case, the mass flow and heat capacity of the streams are lumped into a single parameter for optimization purposes. The heat exchanged in the recovery heat exchanger is modeled as a function of the heat transfer coefficient, the heat transfer area, and the driving force, expressed as: <span id="eq-HEDC-Design"><span class="math display">\[
+\mathrm{Q_{HEDC}}[t] = \mathrm{U_{HEDC} A_{HEDC} \Delta T_{HEDC}}[t]
+\tag{3.13}\]</span></span></p>
+<p>where</p>
+<ul>
+<li><span class="math inline">\(U\)</span> is the heat transfer coefficient of recovery heat exchanger and is <span class="math inline">\(\mathrm{0.15 \ kW \cdot m^{-2} K^{-1}}\)</span>.</li>
+<li><span class="math inline">\(A\)</span> is the heat transfer area <span class="math inline">\(\mathrm{m^{2}}\)</span>.</li>
+<li><span class="math inline">\(\Delta T_{\text{LMTD}}\)</span> is the log mean temperature difference <span class="math inline">\(\mathrm{K}\)</span>.</li>
+</ul>
+<p>The above equation, <a href="#eq-HEDC-Design" class="quarto-xref">eq&nbsp;<span>3.13</span></a>, can be rearranged to get the exchanger area as given by <a href="#eq-HEDC-Design2" class="quarto-xref">eq&nbsp;<span>3.14</span></a> <span id="eq-HEDC-Design2"><span class="math display">\[
+\mathrm{A_{HEDC}} \geq \frac{\mathrm{Q_{HEDC}}[t]}{\mathrm{U_{HEDC} \Delta T_{HEDC}}[t]}
+\tag{3.14}\]</span></span></p>
+<p>The inequality in <a href="#eq-HEDC-Design2" class="quarto-xref">eq&nbsp;<span>3.14</span></a> ensures that the exchanger area found in optimal solution is for the worst case scenario. The temperature difference <span class="math inline">\(\Delta T_{HEDC}\)</span> is defined using <a href="#eq-LMTD-HEDC" class="quarto-xref">eq&nbsp;<span>3.15</span></a>. <span id="eq-LMTD-HEDC"><span class="math display">\[
+\mathrm{\Delta T_{HEDC}} = \frac{(\mathrm{TDCin - TRadin}[t])-(\mathrm{TDCout}[t]-\mathrm{EPFLMediumOut})}{\ln(\mathrm{TDCin - TRadin}[t])-\ln(\mathrm{TDCout}[t]-\mathrm{EPFLMediumOut})}
+\tag{3.15}\]</span></span></p>
+<p>Heat balance on the existing heat exchanger for removing heat from data center is given by <a href="#eq-free-cooling-HEX" class="quarto-xref">eq&nbsp;<span>3.16</span></a>: <span id="eq-free-cooling-HEX"><span class="math display">\[
+\mathrm{Q_{free}}[t] = (\mathrm{m_{DC} c_{P_{DC}}})[t](\mathrm{TDCout}[t] - \mathrm{Tret})
+\tag{3.16}\]</span></span></p>
+<p>where,</p>
+<ul>
+<li><span class="math inline">\(\mathrm{Q_{free}}\)</span> is the heat removed by the existing data center heat management system <span class="math inline">\(\mathrm{kW}\)</span>.</li>
+<li><span class="math inline">\(\mathrm{Tret}\)</span> is the return temperature of data center medium and is fixed at <span class="math inline">\(\mathrm{17 °C}\)</span>.</li>
+</ul>
+<p>This heat must be removed by lake water circulating on the other heat side of heat exchanger, given by <a href="#eq-free-cooling-HEX2" class="quarto-xref">eq&nbsp;<span>3.17</span></a> <span id="eq-free-cooling-HEX2"><span class="math display">\[
+\mathrm{Q_{free}}[t] = \mathrm{m_{H_2O}}[t] \mathrm{C_{p,H_2O}} (\mathrm{THPhighin} - \mathrm{THPin}[t])
+\tag{3.17}\]</span></span></p>
+<p>The heat energy removed in recovery heat exchanger and free cooling exchnager must be equal to the total heat removed from data center (574 kW): <span id="eq-Constraint-DC-heat"><span class="math display">\[
+\mathrm{Q_{DC}} = \mathrm{Q_{HEDC}}[t] + \mathrm{Q_{free}}[t]
+\tag{3.18}\]</span></span></p>
+<p>The heat balance for condenser and evaporator are given by <a href="#eq-Q-cond-DataCenter" class="quarto-xref">eq&nbsp;<span>3.19</span></a> and <a href="#eq-Q-evap-DataCenter" class="quarto-xref">eq&nbsp;<span>3.20</span></a> respectively. <span id="eq-Q-cond-DataCenter"><span class="math display">\[
+\mathrm{Q_{cond}}[t] = \mathrm{MC_{P}}[t](\mathrm{EPFLMediumT} - \mathrm{TRadin}[t])
+\tag{3.19}\]</span></span></p>
+<p><span id="eq-Q-evap-DataCenter"><span class="math display">\[
+\mathrm{Q_{evap}}[t] = \mathrm{m_{H_2O}}[t] \mathrm{C_{p,H_2O}} (\mathrm{THPin}[t] - \mathrm{THPhighout})
+\tag{3.20}\]</span></span></p>
+<p>In contrast to energy balance for the reference case where both temperatures were fixed, here we have one temperature variable in each equation (<span class="math inline">\(\mathrm{TRadin}[t]\)</span> and <span class="math inline">\(\mathrm{THPin}[t]\)</span>) which depends on operating condition.</p>
+<p><a href="#eq-Electricity" class="quarto-xref">Eq&nbsp;<span>3.4</span></a>, <a href="#eq-Electricity2" class="quarto-xref">eq&nbsp;<span>3.5</span></a>, <a href="#eq-COP-NLP" class="quarto-xref">eq&nbsp;<span>3.6</span></a> are same for this case, with the only difference being that the <span class="math inline">\(\mathrm{\Delta T}\)</span> are now no longer constant and for this case are defined using <a href="#eq-TLMCond-DC" class="quarto-xref">eq&nbsp;<span>3.21</span></a> and <a href="#eq-TLMEvap-DC" class="quarto-xref">eq&nbsp;<span>3.22</span></a>. <span id="eq-TLMCond-DC"><span class="math display">\[
+\mathrm{\Delta T_{cond}}[t] = \frac{\mathrm{EPFLMediumT + TRadin}[t]}{2}
+\tag{3.21}\]</span></span></p>
+<p><span id="eq-TLMEvap-DC"><span class="math display">\[
+\mathrm{\Delta T_{evap}}[t] = \frac{\mathrm{THPhighout + THPin}[t]}{2}
+\tag{3.22}\]</span></span></p>
+<p>Finally, for the heat recovery case a constraint is defined to ensure that the energy demand of EPFL in each period is met by energy recovered from data center as well as energy from heat pump. <span id="eq-DataCenter-Constraint"><span class="math display">\[
+\mathrm{Q_{EPFL}}[t] = (\mathrm{Q_{HEDC}}[t]+\mathrm{Q_{cond}}[t]) \mathrm{\Delta h}[t]
+\tag{3.23}\]</span></span></p>
+<p>The purchased cost of additional heat exchanger is given by <a href="#eq-HE-Cost" class="quarto-xref">eq&nbsp;<span>3.24</span></a> <span id="eq-HE-Cost"><span class="math display">\[
+\mathrm{C_{HE}} = \mathrm{a_{HE} A_{HEDC}^{b_{HE}}}
+\tag{3.24}\]</span></span></p>
+<p>The installed cost of heat exchanger taking into account cost indices is given by <a href="#eq-HE-Cost-installed" class="quarto-xref">eq&nbsp;<span>3.25</span></a> <span id="eq-HE-Cost-installed"><span class="math display">\[
+\mathrm{C_i} = \mathrm{C_{HE} F_{BM}}\frac{\mathrm{I_{year,project}}}{\mathrm{I_{year,ref}}}
+\tag{3.25}\]</span></span></p>
+<p>The parameters to be used in <a href="#eq-HE-Cost" class="quarto-xref">eq&nbsp;<span>3.24</span></a> and <a href="#eq-HE-Cost-installed" class="quarto-xref">eq&nbsp;<span>3.25</span></a> are defined in <a href="#sec-Heat_recovery_intro" class="quarto-xref"><span>Section 3.1</span></a>. The capital cost (CAPEX) is defined by annualization of installed costs and is given by <a href="#eq-Annualized-Cost" class="quarto-xref">eq&nbsp;<span>3.26</span></a>: <span id="eq-Annualized-Cost"><span class="math display">\[
+\mathrm{CAPEX} = \mathrm{C_i} \frac{i(i+1)^n}{(i+1)^n-1}
+\tag{3.26}\]</span></span></p>
+<p>The objective function, total cost per year, is simply the sum of OPEX and CAPEX: <span class="math display">\[
+\mathrm{TOTEX} = \mathrm{CAPEX + OPEX}
+\]</span></p>
+<p>where</p>
+<ul>
+<li><span class="math inline">\(\mathrm{i}\)</span> is the interest rate defined in <a href="#sec-Heat_recovery_intro" class="quarto-xref"><span>Section 3.1</span></a>.</li>
+<li><span class="math inline">\(\mathrm{CAPEX}\)</span> is the annualized capital investment [<span class="math inline">\(\mathrm{CHF/year}\)</span>].</li>
+<li><span class="math inline">\(\mathrm{TOTEX}\)</span> is the total cost per year [<span class="math inline">\(\mathrm{CHF/year}\)</span>].</li>
+</ul>
+</section>
+<section id="optimization-results-1" class="level3" data-number="3.3.3">
+<h3 data-number="3.3.3" class="anchored" data-anchor-id="optimization-results-1"><span class="header-section-number">3.3.3</span> Optimization results</h3>
+<p>The optimal solution for the stream flow rates and temperature is tabulated in <a href="#tbl-Data-center-stream-table" class="quarto-xref">Table&nbsp;<span>3.4</span></a> for each of the typical periods.</p>
+<div class="cell">
+<div id="tbl-Data-center-stream-table" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-Data-center-stream-table-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3.4: Stream data for heat recovery from data center for each typical period
+</figcaption>
+<div aria-describedby="tbl-Data-center-stream-table-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-32c468ea64fd67a2433f" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-32c468ea64fd67a2433f">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Variable":["m<sub>Lake<\/sub> [kg/s]","m<sub>EPFL<\/sub> [kg/s]","m<sub>DC<\/sub> [kg/s]","T<sub>HP,in<\/sub> [°C]","T<sub>Rad,in<\/sub> [°C]","T<sub>DC,out<\/sub> [°C]"],"Flow1":[20.2426863786064,32.0870187178872,13.3488372093023,10.3125650677474,39.1535209659248,37.9973945323472],"Flow2":[659.520530972701,434.662479407203,13.3488372093023,7.09182929258293,30.7381483472819,35.9645438947812],"Flow3":[258.442076736977,182.206233880405,13.3488372093023,7.23692251933585,31.7455795406456,36.1735446276861],"Flow4":[1206.87042741425,779.166005428571,13.3488372093023,7.05001621762744,30.4128545972582,35.9018510507918]},"columns":[{"id":"Variable","name":"Variable","type":"character","html":true},{"id":"Flow1","name":"Cluster 1","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Flow2","name":"Cluster 2","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Flow3","name":"Cluster 3","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Flow4","name":"Cluster 4","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}}],"resizable":true,"highlight":true,"outlined":true,"striped":true,"nowrap":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"6d3fbe2f8413ea4afd4ab2e339a7586c"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>The heat duty of all the exchangers in flowsheet for each period are given in <a href="#tbl-Data-center-heat-load" class="quarto-xref">Table&nbsp;<span>3.5</span></a>. The temperature difference for each heat exchanger is given in <a href="#tbl-Data-center-LMTD" class="quarto-xref">Table&nbsp;<span>3.6</span></a></p>
+<div class="cell">
+<div id="tbl-Data-center-heat-load" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-Data-center-heat-load-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3.5: Energy requiremnet and COP of heat pump for the case of heat recovery from data center for each typical period
+</figcaption>
+<div aria-describedby="tbl-Data-center-heat-load-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-b75ce8a3188ff860b0a7" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-b75ce8a3188ff860b0a7">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Unit":["W-101","W-102","W-103","W-104","V-101","Heat Pump"],"Variable":["Q<sub>evap<\/sub> [kW]","Q<sub>cond<\/sub> [kW]","Q<sub>HEDC<\/sub> [kW]","Q<sub>free<\/sub> [kW]","E [kW]","COP [-]"],"Qevap1":[618.748517682095,829.336456557848,293.709198568203,280.290801431797,210.587938875752,3.93819542071523],"Qevap2":[11280.3378870637,14892.3413884522,320.845390799897,253.154609200103,3612.00350138853,4.12301410609468],"Qevap3":[4577.09604900253,6059.16271177446,318.055474039725,255.944525960275,1482.06666277193,4.08831995466864],"Qevap4":[20431.1912789978,26949.1279226315,321.6822673685,252.3177326315,6517.93664363369,4.13461029094702]},"columns":[{"id":"Unit","name":"Unit","type":"character"},{"id":"Variable","name":"Variable","type":"character","html":true},{"id":"Qevap1","name":"Cluster 1","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Qevap2","name":"Cluster 2","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Qevap3","name":"Cluster 3","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Qevap4","name":"Cluster 4","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}}],"sortable":false,"highlight":true,"outlined":true,"striped":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"166cad1286bccf1e268edac10fa315b6"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell">
+<div id="tbl-Data-center-LMTD" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-Data-center-LMTD-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3.6: Mean temperature difference [K] for the exchangers in case of heat recovery from data center for each typical period
+</figcaption>
+<div aria-describedby="tbl-Data-center-LMTD-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-1e0443bc6580e8aaeadd" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-1e0443bc6580e8aaeadd">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Unit":["W-101","W-102","W-103"],"TLMEvapHP1":[279.806282533874,325.226760482962,13.4115264016333],"TLMEvapHP2":[278.195914646291,321.019074173641,14.6506355951322],"TLMEvapHP3":[278.268461259668,321.522789770323,14.5232407360755],"TLMEvapHP4":[278.175008108814,320.856427298629,14.6983317450115]},"columns":[{"id":"Unit","name":"Unit","type":"character"},{"id":"TLMEvapHP1","name":"Cluster 1","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"TLMEvapHP2","name":"Cluster 2","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"TLMEvapHP3","name":"Cluster 3","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"TLMEvapHP4","name":"Cluster 4","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}}],"sortable":false,"highlight":true,"outlined":true,"striped":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"2d3820d16d397ee9681edf718435d32a"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>Based on the optimum <span class="math inline">\(\mathrm{\Delta T_{min}}\)</span> of 5.9 for recovering heat from data center an additional heat exchanger of an area of 146 <span class="math inline">\(\mathrm{m^2}\)</span> will be required. The total cost per year (TOTEX) is 937 094 <span class="math inline">\(\frac{\mathrm{CHF}}{\mathrm{year}}\)</span>. The breakdown of TOTEX is:</p>
+<ul>
+<li>Annualized capital cost (CAPEX) : 15 150 <span class="math inline">\(\frac{\mathrm{CHF}}{\mathrm{year}}\)</span>.</li>
+<li>Operating cost (OPEX): 921 943 <span class="math inline">\(\frac{\mathrm{CHF}}{\mathrm{year}}\)</span>.</li>
+</ul>
+</section>
+<section id="annual-savings-and-payback-time" class="level3" data-number="3.3.4">
+<h3 data-number="3.3.4" class="anchored" data-anchor-id="annual-savings-and-payback-time"><span class="header-section-number">3.3.4</span> Annual savings and payback time</h3>
+<p>Heat recovery from data center will result in an energy saving of 105 <span class="math inline">\(\frac{\mathrm{MWh}}{\mathrm{year}}\)</span>, which translate to annual savings of 21 035 <span class="math inline">\(\frac{\mathrm{MWh}}{\mathrm{year}}\)</span> in operational costs.</p>
+<p>The payback period for this investment is determined using <a href="#eq-Payback" class="quarto-xref">eq&nbsp;<span>3.27</span></a>: <span id="eq-Payback"><span class="math display">\[
+\mathrm{Payback} = \frac{\mathrm{Initial \ investment}}{\mathrm{Savings\ from\ operational\ costs}}
+\tag{3.27}\]</span></span></p>
+<p>The initial invetment is calculated using <a href="#eq-HE-Cost-installed" class="quarto-xref">eq&nbsp;<span>3.25</span></a>, and is 173 773 CHF. Thus the payback is: <span class="math display">\[
+\mathrm{Payback} = \frac{1.73773\times 10^{5}}{2.1035\times 10^{4}} = 8.26 \ \mathrm{years}
+\]</span></p>
+</section>
+</section>
+<section id="air-ventilation-heat-recovery" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="air-ventilation-heat-recovery"><span class="header-section-number">3.4</span> Air Ventilation Heat Recovery</h2>
+<p>A third heat recovery option involves air ventilation, which accounts for the heating demand of each building. In this system, the incoming air ventilation flow (evaluated at ambient temperature <span class="math inline">\(T = T_{\text{ext}}\)</span>) is preheated using the outgoing air ventilation flow (at the building’s internal temperature, <span class="math inline">\(T = T_{\text{int}} = 21^\circ \text{C}\)</span>). Preheating reduces the heating demand and operating costs, although the addition of a heat exchanger system incurs new investment costs. <a href="#fig-ventilation-flowsheet" class="quarto-xref">Figure&nbsp;<span>3.3</span></a> shows the flow diagram for the process of heat recovery from ventilation air.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-ventilation-flowsheet" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ventilation-flowsheet-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Figures/Ventilation-Model.png" class="img-fluid figure-img" style="width:75.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ventilation-flowsheet-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3.3: Process flowsheet for the case of heat recovery from ventilation air. For values of variable dependent on typical periods see <a href="#tbl-vent-stream-table" class="quarto-xref">Table&nbsp;<span>3.7</span></a>, <a href="#tbl-vent-unit-table" class="quarto-xref">Table&nbsp;<span>3.8</span></a>
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The new heat demand can be analytically expressed as: <span class="math display">\[
+Q(t) = A_{\text{th}} \cdot \left[ U \cdot \left(T_{\text{int}} - T_{\text{ext}}(t)\right) + \dot{m}_{\text{air}} \cdot c_{p,\text{air}} \cdot \left(T_{\text{int}} - T_{\text{new}}(t)\right) - k_{\text{sun}} \cdot \text{Irr}(t) - Q_{\text{people}}(t) \right] - Q_{\text{el}}(t)
+\]</span></p>
+<p>with:</p>
+<ul>
+<li><p><span class="math inline">\(U\)</span>: Overall heat transfer coefficient of the exchanger (<span class="math inline">\(U_{\text{ex}} = 0.025 \, \text{kW/m}^2 \, \text{K}\)</span>)</p></li>
+<li><p><span class="math inline">\(A_{\text{th}}\)</span>: Heated area of the building (<span class="math inline">\(\text{m}^2\)</span>)</p></li>
+<li><p><span class="math inline">\(T\)</span>: Temperature (<span class="math inline">\(^\circ \text{K}\)</span>)</p></li>
+<li><p><span class="math inline">\(\dot{m}_{\text{air}}\)</span>: Air renewal rate (<span class="math inline">\(\text{m}^3 \, \text{m}^{-2} \, \text{h}^{-1}\)</span>)</p></li>
+<li><p><span class="math inline">\(c_{p,\text{air}}\)</span>: Air specific heat capacity (<span class="math inline">\(\text{KJ} \, \text{m}^{-3} \, \text{K}^{-1}\)</span>)</p></li>
+<li><p><span class="math inline">\(k_{\text{sun}}\)</span>: Solar radiation coefficient (dimensionless)</p></li>
+<li><p><span class="math inline">\(\text{Irr}\)</span>: Solar irradiation (<span class="math inline">\(\text{W} \, \text{m}^{-2}\)</span>)</p></li>
+<li><p><span class="math inline">\(Q_{\text{people}}\)</span>: Heating power gained from people (<span class="math inline">\(\text{kW}\)</span>)</p></li>
+<li><p><span class="math inline">\(Q_{\text{el}}\)</span>: Heating power gained from electrical appliances (<span class="math inline">\(\text{kW}\)</span>)</p></li>
+</ul>
+<section id="sec-Vent-Assumptions" class="level3" data-number="3.4.1">
+<h3 data-number="3.4.1" class="anchored" data-anchor-id="sec-Vent-Assumptions"><span class="header-section-number">3.4.1</span> Assumptions</h3>
+<p>In the AMPL model the following assumptions were made. Some of these were done to simplify the model while others were made to accelerate convergence:</p>
+<ul>
+<li>A single heat exchanger is used for recovering energy of outgoing ventilation air for all the medium temperature buildings. In practice it might not be possible, but for preliminary study it is a suitable simplification by which the model equations are reduced.</li>
+<li>The temperature difference of the recovery heat exchanger is modeled using arithemetic mean instead of log mean, as with log mean difficulty with convergence was observed.</li>
+<li>Due to air infiltration, an air mass flow loss of 20% between the air flow entering and exiting EPFL is assumed.</li>
+</ul>
+</section>
+<section id="sec-Vent-eq" class="level3" data-number="3.4.2">
+<h3 data-number="3.4.2" class="anchored" data-anchor-id="sec-Vent-eq"><span class="header-section-number">3.4.2</span> Model equations and constraints</h3>
+<p>The heating demand of building is given by <a href="#eq-QEPFL-ventilation" class="quarto-xref">eq&nbsp;<span>3.28</span></a>. <span id="eq-QEPFL-ventilation"><span class="math display">\[
+\begin{align}
+\mathrm{Q_{EPFL,t}}[t] &amp;= \sum_{b=1}^n \mathrm{A_{th}}[b] \big( \mathrm{U_{env}}[b](T_{int} - T_{ext}[t]) +  m_{air}C_{p,air}(T_{int} - T_{ext,new}[t]) \\
+&amp; \quad - k_{sun}[b] \cdot \mathrm{Irr}[t]- Q_{people}[b]  - Q_{el}[b] \big)
+\end{align}
+\tag{3.28}\]</span></span></p>
+<p>where,</p>
+<ul>
+<li><span class="math inline">\(\mathrm{A_{th}}\)</span> is the floor area of each building [<span class="math inline">\(\mathrm{m^2}\)</span>].</li>
+<li><span class="math inline">\(\mathrm{U_{env}}\)</span> is the overall heat transfer coefficient of building envelope [<span class="math inline">\(\mathrm{kW \cdot m^{-2} \cdot K^{-1}}\)</span>].</li>
+<li><span class="math inline">\(\mathrm{T_{int}}\)</span> is the internal temperature of building [<span class="math inline">\(\mathrm{°C}\)</span>].</li>
+<li><span class="math inline">\(\mathrm{T_{ext}}\)</span> is the external temperature from clustering data [<span class="math inline">\(\mathrm{°C}\)</span>].</li>
+<li><span class="math inline">\(\mathrm{m_{air}}\)</span> is the inlet mass flow rate [<span class="math inline">\(\mathrm{m^3 \cdot m^{-2} s^{-1}}\)</span>].</li>
+<li><span class="math inline">\(\mathrm{T_{ext,new}}\)</span> is the temperature of external air after preheating [<span class="math inline">\(\mathrm{°C}\)</span>].</li>
+</ul>
+<p><span class="math inline">\([b]\)</span> indicates parameter unique to each building, n is the number of buildings in the set medium heating demand.</p>
+<p>This heating requirement is provided by condenser of heat pump, <a href="#eq-Constraint-heating-reference" class="quarto-xref">eq&nbsp;<span>3.9</span></a>. For the heat pump, the model equations are same as those defined in <a href="#sec-Reference" class="quarto-xref"><span>Section 3.2</span></a> and are not discussed here. <!-- Energy balance on condenser and evaporator is same as for reference case and is given by [eq @#eq-Q-Cond] and [eq @eq-Q-evap] respectively. The temperature difference in condenser and  --></p>
+<p>For the ventilation heat exchanger, energy balance on the two streams is given by <a href="#eq-Qventilation-HE1" class="quarto-xref">eq&nbsp;<span>3.29</span></a>: <span id="eq-Qventilation-HE1"><span class="math display">\[
+\begin{align}
+\mathrm{Q_{W-103}}[t] &amp;= \sum_{b=1}^n \mathrm{m_{air,out}C_{p,air}(T_{int}-T_{release}[t])A_{th}[b]} \\
+&amp; = \sum_{b=1}^n \mathrm{m_{air}C_{p,air}(T_{ext,new}[t] - T_{ext}[t])A_{th}[b]}
+\end{align}
+\tag{3.29}\]</span></span></p>
+<p>where,</p>
+<ul>
+<li><span class="math inline">\(\mathrm{Q_{W-103}}\)</span> is the heat exchanged in the recovery heat exchanger [<span class="math inline">\(\mathrm{kW}\)</span>].</li>
+<li><span class="math inline">\(T_{release}\)</span> is the temperature of outgoing air after heat exchange [<span class="math inline">\(\mathrm{°C}\)</span>].</li>
+</ul>
+<p>The heat exchanger area is given by <a href="#eq-Vent-Area" class="quarto-xref">eq&nbsp;<span>3.30</span></a>: <span id="eq-Vent-Area"><span class="math display">\[
+\mathrm{A_{W-103}} \geq \frac{\mathrm{Q_{W-103}}[t]}{\mathrm{U_{W-103}\Delta T}}
+\tag{3.30}\]</span></span></p>
+<p>where,</p>
+<ul>
+<li><span class="math inline">\(\mathrm{A_{W-103}}\)</span> is the area of recovery heat exchanger [<span class="math inline">\(\mathrm{m^2}\)</span>].</li>
+<li><span class="math inline">\(\mathrm{U_{W-103}}\)</span> is the heat transfer coefficient of vent heat exchanger defined in <a href="#sec-Heat_recovery_intro" class="quarto-xref"><span>Section 3.1</span></a>.</li>
+<li><span class="math inline">\(\mathrm{\Delta T}\)</span> is the mean temperature difference [<span class="math inline">\(\mathrm{K}\)</span>].</li>
+</ul>
+<p>The <span class="math inline">\(\geq\)</span> in <a href="#eq-Vent-Area" class="quarto-xref">eq&nbsp;<span>3.30</span></a> is used to ensure that the exchanger is sized for the worst case scenario. Instead of LMTD, simple artihmetic mean (<a href="#eq-DTvent" class="quarto-xref">eq&nbsp;<span>3.31</span></a>)is used for the ventilation case to converge the model. <span id="eq-DTvent"><span class="math display">\[
+\mathrm{\Delta T} = \frac{\mathrm{(T_{int}+T_{release}[t])-(T_{ext,new}[t]+T_{ext}[t])}}{2}
+\tag{3.31}\]</span></span></p>
+<p>Temperature cross in the exchanger is avoided by constraining temperature difference on both ends using <a href="#eq-Temp-cons-1" class="quarto-xref">eq&nbsp;<span>3.32</span></a> and <a href="#eq-Temp-cons-2" class="quarto-xref">eq&nbsp;<span>3.33</span></a>. <span class="math inline">\(\mathrm{\Delta T_{min}}\)</span> of 2°C was used in these equations: <span id="eq-Temp-cons-1"><span class="math display">\[
+\mathrm{\Delta T_{min}} &lt;= \mathrm{T_{release}[t] - T_{ext}[t]}
+\tag{3.32}\]</span></span></p>
+<p><span id="eq-Temp-cons-2"><span class="math display">\[
+\mathrm{\Delta T_{min}} &lt;= \mathrm{T_{int} - T_{ext,new}[t]}
+\tag{3.33}\]</span></span></p>
+<p>The cost for installation of recovery heat exchanger is calculated using <a href="#eq-HE-Cost" class="quarto-xref">eq&nbsp;<span>3.24</span></a>, <a href="#eq-HE-Cost-installed" class="quarto-xref">eq&nbsp;<span>3.25</span></a>, <a href="#eq-Annualized-Cost" class="quarto-xref">eq&nbsp;<span>3.26</span></a>.</p>
+</section>
+<section id="optimization-results-2" class="level3" data-number="3.4.3">
+<h3 data-number="3.4.3" class="anchored" data-anchor-id="optimization-results-2"><span class="header-section-number">3.4.3</span> Optimization results</h3>
+<p>The optimal solution for the stream flow rates and temperature is tabulated in <a href="#tbl-vent-stream-table" class="quarto-xref">Table&nbsp;<span>3.7</span></a> for each of the typical periods.</p>
+<div class="cell">
+<div id="tbl-vent-stream-table" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-vent-stream-table-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3.7: Stream data for heat recovery from ventilation air for each typical period
+</figcaption>
+<div aria-describedby="tbl-vent-stream-table-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-a39f5725921b4756dc0b" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-a39f5725921b4756dc0b">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Variable":["m<sub>Lake<\/sub> [kg/s]","m<sub>EPFL<\/sub> [kg/s]","T<sub>release<\/sub> [°C]","T<sub>ext<\/sub> [°C]","T<sub>ext,new<\/sub> [°C]"],"Flow1":[49.0050170743794,30.7807250379144,17.1816035546088,10.9725589,14.0272760563128],"Flow2":[533.047223426074,334.814290373543,13.7461355562402,1.95072120000003,7.7538127550078],"Flow3":[229.42673107909,144.106084382635,17.0289586092435,10.5717,13.7485331126052],"Flow4":[947.354056568271,595.046108942715,9.5,-9.19999999999999,0]},"columns":[{"id":"Variable","name":"Variable","type":"AsIs","html":true},{"id":"Flow1","name":"Cluster 1","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Flow2","name":"Cluster 2","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Flow3","name":"Cluster 3","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Flow4","name":"Cluster 4","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}}],"outlined":true,"striped":true,"nowrap":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"571a8498e4c94102e68c7d7caf29412c"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>The energy required for different unit operation and the coefficient of performance of heat pump is shown in <a href="#tbl-vent-unit-table" class="quarto-xref">Table&nbsp;<span>3.8</span></a>.</p>
+<div class="cell">
+<div id="tbl-vent-unit-table" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-vent-unit-table-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3.8: Energy requiremnet and COP of heat pump for the case of heat recovery from ventilation air for each typical period
+</figcaption>
+<div aria-describedby="tbl-vent-unit-table-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-7ad7ba2d8f5eea0e1ba7" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-7ad7ba2d8f5eea0e1ba7">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Unit":["W-101","W-102","W-103","V-101","Heat Pump"],"Variable":["Q<sub>evap<\/sub> [kW]","Q<sub>cond<\/sub> [kW]","Q<sub>vent<\/sub> [kW]","E [kW]","COP [-]"],"Qevap1":[819.363885483623,1077.325376327,358.792414538166,257.96149084338,4.17630310944782],"Qevap2":[8912.54957568395,11718.500163074,681.603279211752,2805.95058739005,4.17630310944782],"Qevap3":[3836.01494364238,5043.71295339222,373.135568607662,1207.69800974985,4.17630310944782],"Qevap4":[15839.7598258215,20826.613812995,1080.58784000498,4986.85398717352,4.17630310944782]},"columns":[{"id":"Unit","name":"Unit","type":"character"},{"id":"Variable","name":"Variable","type":"character","html":true},{"id":"Qevap1","name":"Cluster 1","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Qevap2","name":"Cluster 2","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Qevap3","name":"Cluster 3","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Qevap4","name":"Cluster 4","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}}],"outlined":true,"striped":true,"nowrap":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"8a2b84707941c592d41e7f9acdc7e974"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>The optimum <span class="math inline">\(\mathrm{\Delta T_{min}}\)</span> is found to be 6.21 °C resulting in a area for recovery heat exchanger of 2177.51 <span class="math inline">\(\mathrm{m^2}\)</span>. The total costs for the case of heat recovery from ventilation air is 815 398 <span class="math inline">\(\frac{\mathrm{CHF}}{\mathrm{year}}\)</span>. The breakdown of TOTEX is:</p>
+<ul>
+<li>Annualized capital cost (CAPEX) : 76 695 <span class="math inline">\(\frac{\mathrm{CHF}}{\mathrm{year}}\)</span>.</li>
+<li>Operating cost (OPEX): 738 703 <span class="math inline">\(\frac{\mathrm{CHF}}{\mathrm{year}}\)</span>.</li>
+</ul>
+</section>
+<section id="annual-savings-and-payback-time-1" class="level3" data-number="3.4.4">
+<h3 data-number="3.4.4" class="anchored" data-anchor-id="annual-savings-and-payback-time-1"><span class="header-section-number">3.4.4</span> Annual savings and payback time</h3>
+<p>The addition of recovery heat exchanger will result in an energy saving of 1021 <span class="math inline">\(\frac{\mathrm{MWh}}{\mathrm{year}}\)</span>. Compared to the reference case this results in reduction of operating bill from 942 978 <span class="math inline">\(\frac{\mathrm{CHF}}{\mathrm{year}}\)</span> to 738 703 <span class="math inline">\(\frac{\mathrm{CHF}}{\mathrm{year}}\)</span>.</p>
+<p>The initial investment for installation of heat exchanger is calculated using <a href="#eq-HE-Cost-installed" class="quarto-xref">eq&nbsp;<span>3.25</span></a>, and is 879 688 CHF. Thus the payback is: <span class="math display">\[
+\mathrm{Payback} = \frac{8.79688\times 10^{5}}{2.04275\times 10^{5}} = 4.31 \ \mathrm{years}
+\]</span></p>
+</section>
+</section>
+<section id="air-ventilation-with-heat-pump-integration" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="air-ventilation-with-heat-pump-integration"><span class="header-section-number">3.5</span> Air Ventilation with Heat Pump Integration</h2>
+<p>The final heat recovery option involves utilizing heat from the air leaving the ventilation system as a heat source for a to-be-installed heat pump evaporator. While this solution also requires additional investment, it enables dual exploitation of ventilation heat—once at <span class="math inline">\(T_{\text{release}}\)</span> and again at <span class="math inline">\(T_{\text{release,2}}\)</span>.</p>
+<p>This setup results in a greater heat supply compared to ventilation heat recovery without heat pump integration. Additionally, using the heated heat exchanger outlet stream (<span class="math inline">\(T_{\text{new}} &gt; T_{\text{ext}}\)</span>) as the condenser heat source for the heat pump loop enhances system efficiency compared to operating the heat pump in isolation.</p>
+<p>This more complex system must be thoroughly assessed to determine whether the significant operational cost reductions can offset the newly added investment costs. The flowsheet for the process is shown in <a href="#fig-ventilation-heatpump" class="quarto-xref">Figure&nbsp;<span>3.4</span></a>.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-ventilation-heatpump" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ventilation-heatpump-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Figures/Ventilation_with_HP-Model.png" class="img-fluid figure-img" style="width:75.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ventilation-heatpump-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3.4: Process flowsheet for heat recovery from data center. For values of variable dependent on typical periods see <a href="#tbl-HPvent-stream-table" class="quarto-xref">Table&nbsp;<span>3.9</span></a>, <a href="#tbl-HPvent-unit-table" class="quarto-xref">Table&nbsp;<span>3.10</span></a>
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="assumptions-1" class="level3" data-number="3.5.1">
+<h3 data-number="3.5.1" class="anchored" data-anchor-id="assumptions-1"><span class="header-section-number">3.5.1</span> Assumptions</h3>
+<p>For the case of ventilation heat recovery with heat pump integration, in addition to assumptions mentioned in <a href="#sec-Vent-Assumptions" class="quarto-xref"><span>Section 3.4.1</span></a> the following assumptions were made:</p>
+<ul>
+<li>The carnot efficiency of Air heat pump is assumed to be constant (<span class="math inline">\(\mathrm{\eta_{Air,HP}} = 0.55\)</span>).</li>
+<li>The mean temperature differenc for condenser and evaporator of air heat pump are modeled as simple arithemetic mean.</li>
+</ul>
+</section>
+<section id="model-equation-and-constraints" class="level3" data-number="3.5.2">
+<h3 data-number="3.5.2" class="anchored" data-anchor-id="model-equation-and-constraints"><span class="header-section-number">3.5.2</span> Model equation and constraints</h3>
+<p>The equations for existing heat pump and recovery heat exchanger are same as those discussed in <a href="#sec-Eq-Ref" class="quarto-xref"><span>Section 3.2.1</span></a> and <a href="#sec-Vent-eq" class="quarto-xref"><span>Section 3.4.2</span></a>. For the new heat pump condenser and evaporator duty are given by <a href="#eq-Q-Cond-HP" class="quarto-xref">eq&nbsp;<span>3.34</span></a> and <a href="#eq-Q-evap-HP" class="quarto-xref">eq&nbsp;<span>3.35</span></a> respectively. <span id="eq-Q-Cond-HP"><span class="math display">\[
+\mathrm{Q_{cond,2}}[t] = \mathrm{m_{air}[t]C_{p,air}}(\mathrm{T_{Air,in}[t]} - \mathrm{T_{ext,new}[2]})
+\tag{3.34}\]</span></span></p>
+<p><span id="eq-Q-evap-HP"><span class="math display">\[
+\mathrm{Q_{evap,2}}[t] = \mathrm{m_{air,out}[t]C_{p,air}}(\mathrm{T_{release}[t]} - \mathrm{T_{release,2}[t]})
+\tag{3.35}\]</span></span></p>
+<p>Constraints are added on COP of air heat pump to avoid convergence issues and solution that maybe physically infeasible, defined by <a href="#eq-COP-cons" class="quarto-xref">eq&nbsp;<span>3.36</span></a> <span id="eq-COP-cons"><span class="math display">\[
+\mathrm{3 \leq COP \leq 7}
+\tag{3.36}\]</span></span></p>
+<p>Similar to the case of heat recovery from ventilation air, minimum temperature difference of 2°C is used to avoid temperature cross in the heat exchanger. The electrical energy required for heat pump and the coefficient of performance are calcualted using <a href="#eq-Electricity" class="quarto-xref">eq&nbsp;<span>3.4</span></a> and <a href="#eq-COP-NLP" class="quarto-xref">eq&nbsp;<span>3.6</span></a>.</p>
+<p>The cost of additional heat pump is modeled using <a href="#eq-HE-Cost" class="quarto-xref">eq&nbsp;<span>3.24</span></a>, <a href="#eq-HE-Cost-installed" class="quarto-xref">eq&nbsp;<span>3.25</span></a> and <a href="#eq-Annualized-Cost" class="quarto-xref">eq&nbsp;<span>3.26</span></a>. For the heat pump, inflation is consider using the Marshall and Swift equipment cost indices.</p>
+</section>
+<section id="optimization-results-3" class="level3" data-number="3.5.3">
+<h3 data-number="3.5.3" class="anchored" data-anchor-id="optimization-results-3"><span class="header-section-number">3.5.3</span> Optimization results</h3>
+<p>The optimal solution for stream flow rates and temperature of streams in <a href="#fig-ventilation-heatpump" class="quarto-xref">Figure&nbsp;<span>3.4</span></a> are given in <a href="#tbl-HPvent-stream-table" class="quarto-xref">Table&nbsp;<span>3.9</span></a>.</p>
+<div class="cell">
+<div id="tbl-HPvent-stream-table" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-HPvent-stream-table-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3.9: Stream data for heat recovery from ventilation air with heat pump integration in each typical period
+</figcaption>
+<div aria-describedby="tbl-HPvent-stream-table-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-2343ca6bf8d32c57614a" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-2343ca6bf8d32c57614a">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Variable":["m<sub>Lake<\/sub> [kg/s]","m<sub>EPFL<\/sub> [kg/s]","T<sub>release<\/sub> [°C]","T<sub>release2<\/sub> [°C]","T<sub>ext<\/sub> [°C]","T<sub>ext,new<\/sub> [°C]","T<sub>air,in<\/sub> [°C]"],"Flow1":[7.77585160405427,4.88411930959477,15.6826843345386,-9.17153019741056,10.9725589,15.2264114323691,38.423678328855],"Flow2":[396.911634568033,249.305655162683,10.9014912754437,-13.9606411622514,1.95072120000003,10.029528179645,33.2341851214938],"Flow3":[98.7909076437415,62.0519274549448,15.4770525506537,-9.39022763612809,10.5717,14.990057959477,38.1995194671399],"Flow4":[804.09287514014,505.061791062458,4.98565182815872,-19.8742600351916,-9.19999999999999,3.61147853747303,26.8140629432665]},"columns":[{"id":"Variable","name":"Variable","type":"AsIs","html":true},{"id":"Flow1","name":"Cluster 1","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Flow2","name":"Cluster 2","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Flow3","name":"Cluster 3","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Flow4","name":"Cluster 4","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}}],"outlined":true,"striped":true,"nowrap":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"80d99fd4488350b9f2c0ec65122a3352"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>The energy required for different unit operation and the coefficient of performance of both the existing heat pump and proposed heat pump (air heat pump) is shown in <a href="#tbl-HPvent-unit-table" class="quarto-xref">Table&nbsp;<span>3.10</span></a>.</p>
+<div class="cell">
+<div id="tbl-HPvent-unit-table" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-HPvent-unit-table-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3.10: Energy requirement for process units for each typical period
+</figcaption>
+<div aria-describedby="tbl-HPvent-unit-table-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-f9105a49e6986ebc5302" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-f9105a49e6986ebc5302">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Unit":["W-101","W-102","W-103","W-104","W-105","V-101","V-102","Lake heat pump","Air heat pump"],"Variable":["Q<sub>evap<\/sub> [kW]","Q<sub>cond<\/sub> [kW]","Q<sub>vent<\/sub> [kW]","Q<sub>evap,2<\/sub> [kW]","Q<sub>cond,2<\/sub> [kW]","E<sub>1<\/sub> [kW]","E<sub>2<\/sub> [kW]","COP<sub>1<\/sub> [-]","COP<sub>2<\/sub> [-]"],"Qevap1":[130.012238819787,170.944175835817,499.637099959925,2335.40539095439,2724.63962278013,40.9319370160297,389.234231825732,4.17630310944904,7],"Qevap2":[6636.3625299775,8725.69793069392,948.897889555602,2336.14939031678,2725.50762203624,2089.33540071641,389.358231719463,4.17630310944904,7],"Qevap3":[1651.78397580336,2171.81746031746,518.959117801968,2336.63309423558,2726.07194327484,520.033485119711,389.438849039264,4.17630310944904,7],"Qevap4":[13444.4328723431,17677.162687186,1504.7747739146,2335.94073591374,2725.26419189936,4232.72981484289,389.323455985623,4.17630310944904,7]},"columns":[{"id":"Unit","name":"Unit","type":"character"},{"id":"Variable","name":"Variable","type":"character","html":true},{"id":"Qevap1","name":"Cluster 1","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Qevap2","name":"Cluster 2","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Qevap3","name":"Cluster 3","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"Qevap4","name":"Cluster 4","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}}],"outlined":true,"striped":true,"nowrap":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"fac4ff0aac8cacb264f97fa991355581"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p><a href="#tbl-dT-HPvent" class="quarto-xref">Table&nbsp;<span>3.11</span></a> lists the mean temperature difference for all the heat exchangers shown in the flowsheet of <a href="#fig-ventilation-heatpump" class="quarto-xref">Figure&nbsp;<span>3.4</span></a>.</p>
+<div class="cell">
+<div id="tbl-dT-HPvent" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-dT-HPvent-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3.11: Mean temperature difference [K] for the exchangers for each typical period
+</figcaption>
+<div aria-describedby="tbl-dT-HPvent-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-0e29dae8505c321b9f3c" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-0e29dae8505c321b9f3c">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Unit":["W-101","W-102","W-103","W-104","W-105"],"DTLNVent1":[278.145206357313,320.33138298935,5.24185700108471,276.405577068564,299.975044880612],"DTLNVent2":[278.145206357313,320.33138298935,9.96062094789932,271.620425056596,294.78185665057],"DTLNVent3":[278.145206357313,320.33138298935,5.4576472955883,276.193412457263,299.744788713308],"DTLNVent4":[278.145206357313,320.33138298935,15.7870866453428,265.705695896484,288.36277074037]},"columns":[{"id":"Unit","name":"Unit","type":"character"},{"id":"DTLNVent1","name":"Cluster 1","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"DTLNVent2","name":"Cluster 2","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"DTLNVent3","name":"Cluster 3","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}},{"id":"DTLNVent4","name":"Cluster 4","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}}}],"outlined":true,"striped":true,"nowrap":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"b1fe0884ee304a8bb5a22dc1b39b0841"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>The optimal area for recovery heat exhanger is 3812.67 <span class="math inline">\(\mathrm{m^2}\)</span>. The total cost for the flowsheet of <a href="#fig-ventilation-heatpump" class="quarto-xref">Figure&nbsp;<span>3.4</span></a> is 819 598 <span class="math inline">\(\frac{\mathrm{CHF}}{\mathrm{year}}\)</span>. The breakdown of TOTEX is:</p>
+<ul>
+<li>Annualized capital cost (CAPEX) : 174 440 <span class="math inline">\(\frac{\mathrm{CHF}}{\mathrm{year}}\)</span>.</li>
+<li>Operating cost (OPEX): 645 158 <span class="math inline">\(\frac{\mathrm{CHF}}{\mathrm{year}}\)</span>.</li>
+</ul>
+</section>
+<section id="annual-savings-and-payback-time-2" class="level3" data-number="3.5.4">
+<h3 data-number="3.5.4" class="anchored" data-anchor-id="annual-savings-and-payback-time-2"><span class="header-section-number">3.5.4</span> Annual savings and payback time</h3>
+<p>The addition of recovery heat exchanger will result in an energy saving of 1489 <span class="math inline">\(\frac{\mathrm{MWh}}{\mathrm{yr}}\)</span>. Compared to the reference case this results in reduction of operating bill from 942 978 <span class="math inline">\(\frac{\mathrm{CHF}}{\mathrm{year}}\)</span> to 645 158 <span class="math inline">\(\frac{\mathrm{CHF}}{\mathrm{year}}\)</span>.</p>
+<p>The initial investment for installation of heat exchanger is 1 231 096 CHF and for the heat pump is 769 720 resulting in a total investment of 2 000 816. Thus the payback is: <span class="math display">\[
+\mathrm{Payback} = \frac{\mathrm{2 000 816}}{\mathrm{297 820}} = 6.72 \ \mathrm{years}
+\]</span></p>
+</section>
+</section>
+<section id="summary-of-optimization-study" class="level2" data-number="3.6">
+<h2 data-number="3.6" class="anchored" data-anchor-id="summary-of-optimization-study"><span class="header-section-number">3.6</span> Summary of optimization study</h2>
+<p>The results of NLP optimization of energy system are illustrated in <a href="#fig-comparison-totex" class="quarto-xref">Figure&nbsp;<span>3.5</span></a>, <a href="#fig-comparison-savings" class="quarto-xref">Figure&nbsp;<span>3.6</span></a>. It is again worth mentioning that these results only consider the medium temperature buildings of the campus.</p>
+<p>Compared to the reference case, all three case studies resulted in lower total yearly costs (TOTEX), as shown in <a href="#tbl-summary-table" class="quarto-xref">Table&nbsp;<span>3.12</span></a>. The lowest TOTEX is achieved with heat recovery from ventilation air, followed by heat recovery from ventilation air with heat pump integration, and then heat recovery from data center. This is also reflected in terms of payback time, where the payback is lowest for the case of heat recovery from ventilation air and highest for the case of heat recovery from data center.</p>
+<p>In terms of electricity consumption, ventilation with heat pump integration is the most efficient scenario, demonstrating the lowest annual electrical energy usage. The table also indicates that heat recovery from ventilation air can significantly reduce heating demands. Specifically, heat recovery with heat pump integration reduces heating demands from 19 691 MWh (no heat recovery) to 9 527 MWh (ventilation with heat pump).</p>
+<div class="cell">
+<div id="tbl-summary-table" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-summary-table-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3.12: Summary of NLP optimization problem
+</figcaption>
+<div aria-describedby="tbl-summary-table-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-56285decccf31b35d491" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-56285decccf31b35d491">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Case":["Reference case","Data center","Air ventilation","Air ventilation with HP"],"OPEX":[942978.02161145,937093.790013782,815397.717457723,819598.22217227],"Energy":[4714.89010805725,4609.7173923605,3693.51268574493,3225.78975151415],"Heating":[19690.81021899,19690.81021899,15425.2285142615,9526.98180963253],"OPEX.1":["-",8.26130991619842,4.30637909536578,6.71820460889691]},"columns":[{"id":"Case","name":"Case","type":"character","minWidth":140},{"id":"OPEX","name":"Total cost [CHF/year]","type":"list","minWidth":80,"format":{"cell":{"digits":0},"aggregated":{"digits":0}},"align":"center"},{"id":"Energy","name":"Electricity consumption [MWh/year]","type":"numeric","minWidth":140,"format":{"cell":{"digits":2},"aggregated":{"digits":2}},"align":"center"},{"id":"Heating","name":"Heating demand [MWh/year]","type":"numeric","minWidth":110,"format":{"cell":{"digits":2},"aggregated":{"digits":2}},"align":"center"},{"id":"OPEX.1","name":"Payback Time [years]","type":"list","minWidth":80,"format":{"cell":{"digits":2},"aggregated":{"digits":2}},"align":"center"}],"outlined":true,"striped":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"9418634270a22e10fd69e86708c1e640"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p><a href="#tbl-summary-hx" class="quarto-xref">Table&nbsp;<span>3.13</span></a> shows the heat exchanger specifications and the recovered heat energy for each case. Maximum heat recovery is achieved with ventilation air and heat pump integration, though it requires a large heat exchanger surface area. The data center’s heat exchanger is smaller due to the lower available heat energy compared to ventilation air. However, the data center’s heat can be used to meet nearby buildings’ energy demands, making it a potential energy-saving alternative.</p>
+<div class="cell">
+<div id="tbl-summary-hx" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-summary-hx-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;3.13: Heat exchanger specifications for different scenarios
+</figcaption>
+<div aria-describedby="tbl-summary-hx-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-bc75c526da05f63c18e9" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-bc75c526da05f63c18e9">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Case":["Data center","Air ventilation","Air ventilation with HP"],"MinT":[5.90185105079183,6.20904465460882,4.71012543453861],"AHEDC":[145.998394260899,2177.50698238303,3812.67249038169],"Rec":[759.433013902329,1153.11989713303,1604.90327661143]},"columns":[{"id":"Case","name":"Case","type":"character"},{"id":"MinT","name":"&Delta;T<sub>min<\/sub>","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"html":true,"align":"center"},{"id":"AHEDC","name":"Surface Area [m<sup>2<\/sup>]","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"html":true,"align":"center"},{"id":"Rec","name":"Heat recovered [MWh/year]","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"html":true,"align":"center"}],"outlined":true,"striped":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"c1d9c25b1dc1d3c4f05bd74e86f7e63f"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>The breakdown of total cost is visualized in <a href="#fig-comparison-totex" class="quarto-xref">Figure&nbsp;<span>3.5</span></a>. It is interesting to note that despite having higher TOTEX, the operating costs are lowest for the case of heat recovery from air ventilation with heat pump case. The reason for higher TOTEX, is associated with the higher capital investment (CAPEX) required for installation of heat pump compared to the case where only a heat exchanger is installed to recover heat from ventilation air.</p>
+<div class="cell">
+<div id="fig-comparison-totex" class="cell-output-display quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-comparison-totex-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="plotly html-widget html-fill-item" id="htmlwidget-17d18a42158fb3261abf" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-17d18a42158fb3261abf">{"x":{"data":[{"orientation":"v","width":[0.5,0.5,0.5,0.5],"base":[942.97802161144966,921.94347847209917,738.70253714898683,645.15795030283073],"x":[1,2,3,4],"y":[0,15.15031154168264,76.695180308736667,174.44027186943902],"text":["OPEX: 942978.02 CHF/year<br>CAPEX: 0.00 CHF/year<br>TOTEX: 942978.02 CHF/year","OPEX: 921943.48 CHF/year<br>CAPEX: 15150.31 CHF/year<br>TOTEX: 937093.79 CHF/year","OPEX: 738702.54 CHF/year<br>CAPEX: 76695.18 CHF/year<br>TOTEX: 815397.72 CHF/year","OPEX: 645157.95 CHF/year<br>CAPEX: 174440.27 CHF/year<br>TOTEX: 819598.22 CHF/year"],"type":"bar","textposition":"none","marker":{"autocolorscale":false,"color":"rgba(248,118,109,1)","line":{"width":1.8897637795275593,"color":"transparent"}},"name":"CAPEX","legendgroup":"CAPEX","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.5,0.5,0.5,0.5],"base":[0,0,0,0],"x":[1,2,3,4],"y":[942.97802161144966,921.94347847209917,738.70253714898683,645.15795030283073],"text":["OPEX: 942978.02 CHF/year<br>CAPEX: 0.00 CHF/year<br>TOTEX: 942978.02 CHF/year","OPEX: 921943.48 CHF/year<br>CAPEX: 15150.31 CHF/year<br>TOTEX: 937093.79 CHF/year","OPEX: 738702.54 CHF/year<br>CAPEX: 76695.18 CHF/year<br>TOTEX: 815397.72 CHF/year","OPEX: 645157.95 CHF/year<br>CAPEX: 174440.27 CHF/year<br>TOTEX: 819598.22 CHF/year"],"type":"bar","textposition":"none","marker":{"autocolorscale":false,"color":"rgba(0,191,196,1)","line":{"width":1.8897637795275593,"color":"transparent"}},"name":"OPEX","legendgroup":"OPEX","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null}],"layout":{"margin":{"t":26.228310502283104,"r":7.3059360730593621,"b":25.570776255707766,"l":43.105022831050235},"plot_bgcolor":"rgba(235,235,235,1)","paper_bgcolor":"rgba(255,255,255,1)","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724},"xaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[0.40000000000000002,4.5999999999999996],"tickmode":"array","ticktext":["Reference <br /> Case","Data <br /> Center","Air <br /> Ventilation","Air Ventilation <br /> with HP"],"tickvals":[1,2,3,4],"categoryorder":"array","categoryarray":["Reference <br /> Case","Data <br /> Center","Air <br /> Ventilation","Air Ventilation <br /> with HP"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.6529680365296811,"tickwidth":0.66417600664176002,"showticklabels":true,"tickfont":{"color":"rgba(77,77,77,1)","family":"","size":11.68949771689498},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":true,"gridcolor":"rgba(255,255,255,1)","gridwidth":0.66417600664176002,"zeroline":false,"anchor":"y","title":{"text":"","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}},"hoverformat":".2f"},"yaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[-47.148901080572486,990.12692269202216],"tickmode":"array","ticktext":["0","250","500","750"],"tickvals":[0,250,500,750],"categoryorder":"array","categoryarray":["0","250","500","750"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.6529680365296811,"tickwidth":0.66417600664176002,"showticklabels":true,"tickfont":{"color":"rgba(77,77,77,1)","family":"","size":11.68949771689498},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":true,"gridcolor":"rgba(255,255,255,1)","gridwidth":0.66417600664176002,"zeroline":false,"anchor":"x","title":{"text":"TOTEX [kCHF/year]","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}},"hoverformat":".2f"},"shapes":[{"type":"rect","fillcolor":null,"line":{"color":null,"width":0,"linetype":[]},"yref":"paper","xref":"paper","x0":0,"x1":1,"y0":0,"y1":1}],"showlegend":true,"legend":{"bgcolor":"rgba(255,255,255,1)","bordercolor":"transparent","borderwidth":1.8897637795275593,"font":{"color":"rgba(0,0,0,1)","family":"","size":11.68949771689498},"title":{"text":"Variable","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}}},"hovermode":"closest","barmode":"relative"},"config":{"doubleClick":"reset","modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"source":"A","attrs":{"13af03565a03e":{"x":{},"y":{},"fill":{},"text":{},"type":"bar"}},"cur_data":"13af03565a03e","visdat":{"13af03565a03e":["function (y) ","x"]},"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-comparison-totex-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3.5: Comparison of TOTEX of different heat recovery options with the current energy system (reference case)
+</figcaption>
+</figure>
+</div>
+</div>
+<p><a href="#fig-comparison-savings" class="quarto-xref">Figure&nbsp;<span>3.6</span></a> illustrates the impact of various recovery options on energy savings, which in this context refers to the reduction in electrical energy requirements compared to the reference case. Air ventilation with heat pump integration yields the highest energy savings, while the data center offers the least. These energy savings directly influence OPEX, as depicted in <a href="#fig-comparison-totex" class="quarto-xref">Figure&nbsp;<span>3.5</span></a>. From a <span class="math inline">\(\mathrm{CO}_2\)</span> emissions perspective, air ventilation with heat pump integration stands out as the most effective solution for minimizing the environmental impact of the heating system.</p>
+<div class="cell">
+<div id="fig-comparison-savings" class="cell-output-display quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-comparison-savings-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="plotly html-widget html-fill-item" id="htmlwidget-e7e301c9f68cee2b4f09" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-e7e301c9f68cee2b4f09">{"x":{"data":[{"orientation":"v","width":0.5,"base":0,"x":[1],"y":[105.172715696753],"text":"Energy : 105.2 [MWh/year]","type":"bar","textposition":"none","marker":{"autocolorscale":false,"color":"rgba(253,231,37,1)","line":{"width":1.8897637795275593,"color":"transparent"}},"showlegend":false,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":0.5,"base":0,"x":[2],"y":[1021.3774223123146],"text":"Energy : 1021 [MWh/year]","type":"bar","textposition":"none","marker":{"autocolorscale":false,"color":"rgba(48,105,142,1)","line":{"width":1.8897637795275593,"color":"transparent"}},"showlegend":false,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":0.5,"base":0,"x":[3],"y":[1489.1003565430954],"text":"Energy : 1489 [MWh/year]","type":"bar","textposition":"none","marker":{"autocolorscale":false,"color":"rgba(68,1,84,1)","line":{"width":1.8897637795275593,"color":"transparent"}},"showlegend":false,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null}],"layout":{"margin":{"t":26.228310502283104,"r":7.3059360730593621,"b":25.570776255707766,"l":48.949771689497723},"plot_bgcolor":"rgba(235,235,235,1)","paper_bgcolor":"rgba(255,255,255,1)","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724},"xaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[0.40000000000000002,3.6000000000000001],"tickmode":"array","ticktext":["Data <br /> Center","Air <br /> Ventilation","Air Ventilation <br /> with HP"],"tickvals":[1,2,3],"categoryorder":"array","categoryarray":["Data <br /> Center","Air <br /> Ventilation","Air Ventilation <br /> with HP"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.6529680365296811,"tickwidth":0.66417600664176002,"showticklabels":true,"tickfont":{"color":"rgba(77,77,77,1)","family":"","size":11.68949771689498},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":true,"gridcolor":"rgba(255,255,255,1)","gridwidth":0.66417600664176002,"zeroline":false,"anchor":"y","title":{"text":"","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}},"hoverformat":".2f"},"yaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[-74.455017827154776,1563.5553743702501],"tickmode":"array","ticktext":["0","500","1000","1500"],"tickvals":[0,499.99999999999994,1000,1500],"categoryorder":"array","categoryarray":["0","500","1000","1500"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.6529680365296811,"tickwidth":0.66417600664176002,"showticklabels":true,"tickfont":{"color":"rgba(77,77,77,1)","family":"","size":11.68949771689498},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":true,"gridcolor":"rgba(255,255,255,1)","gridwidth":0.66417600664176002,"zeroline":false,"anchor":"x","title":{"text":"Energy savings [MWh/year]","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}},"hoverformat":".2f"},"shapes":[{"type":"rect","fillcolor":null,"line":{"color":null,"width":0,"linetype":[]},"yref":"paper","xref":"paper","x0":0,"x1":1,"y0":0,"y1":1}],"showlegend":false,"legend":{"bgcolor":"rgba(255,255,255,1)","bordercolor":"transparent","borderwidth":1.8897637795275593,"font":{"color":"rgba(0,0,0,1)","family":"","size":11.68949771689498},"title":{"text":"","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}}},"hovermode":"closest","barmode":"relative"},"config":{"doubleClick":"reset","modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"source":"A","attrs":{"13af04365713d":{"x":{},"y":{},"fill":{},"text":{},"type":"bar"}},"cur_data":"13af04365713d","visdat":{"13af04365713d":["function (y) ","x"]},"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-comparison-savings-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3.6: Comparison of electrical energy saved in each of the three scenarios
+</figcaption>
+</figure>
+</div>
+</div>
+<p>Based on the obtained results, air ventilation with heat pump integration is the preferred technology. Although its TOTEX is slightly higher (4 201 CHF/year), compared to the case of heat recovery from ventilation air, the heat pump integration leads to higher energy savings and consequently lower <span class="math inline">\(\mathrm{CO}_2\)</span> emissions. Additionally, the long-term benefits of reduced carbon footprint and enhanced energy efficiency make this technology a more sustainable and environmentally friendly choice.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./01.00-Energy_demand.html" class="pagination-link" aria-label="Energy demand of the EPFL campus">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Energy demand of the EPFL campus</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./03.00-HP_modeling.html" class="pagination-link" aria-label="Modelling of a heat pump and data reconciliation">
+        <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Modelling of a heat pump and data reconciliation</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.30">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="MOES project report">
+
+<title>5&nbsp; Energy system optimization – Modeling and optimization of energy systems</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./05-Conclusions.html" rel="next">
+<link href="./03.00-HP_modeling.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-de070a7b0ab54f8780927367ac907214.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-6c5e161c8cd73323fda144effafce1d1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+<link href="site_libs/htmltools-fill-0.5.8.1/fill.css" rel="stylesheet">
+<script src="site_libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+<script src="site_libs/plotly-binding-4.10.4/plotly.js"></script>
+<script src="site_libs/typedarray-0.1/typedarray.min.js"></script>
+<script src="site_libs/jquery-3.5.1/jquery.min.js"></script>
+<link href="site_libs/crosstalk-1.2.1/css/crosstalk.min.css" rel="stylesheet">
+<script src="site_libs/crosstalk-1.2.1/js/crosstalk.min.js"></script>
+<link href="site_libs/plotly-htmlwidgets-css-2.11.1/plotly-htmlwidgets.css" rel="stylesheet">
+<script src="site_libs/plotly-main-2.11.1/plotly-latest.min.js"></script>
+<script src="site_libs/core-js-2.5.3/shim.min.js"></script>
+<script src="site_libs/react-18.2.0/react.min.js"></script>
+<script src="site_libs/react-18.2.0/react-dom.min.js"></script>
+<script src="site_libs/reactwidget-2.0.0/react-tools.js"></script>
+<link href="site_libs/reactable-0.4.4/reactable.css" rel="stylesheet">
+<script src="site_libs/reactable-binding-0.4.4/reactable.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top quarto-banner">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./04.00-energy_system_integration.html"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Energy system optimization</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Energy system optimization</span></h1>
+                  <div>
+        <div class="description">
+          MOES project report
+        </div>
+      </div>
+                </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">Modeling and optimization of energy systems</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Abstract</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01.00-Energy_demand.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Energy demand of the EPFL campus</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02.00-Heat_recovery.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">NLP Optimization of Energy Systems</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03.00-HP_modeling.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Modelling of a heat pump and data reconciliation</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04.00-energy_system_integration.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Energy system optimization</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05-Conclusions.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Conclusions</span></span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">5.1</span> Introduction</a></li>
+  <li><a href="#energy-conversion-technologies" id="toc-energy-conversion-technologies" class="nav-link" data-scroll-target="#energy-conversion-technologies"><span class="header-section-number">5.2</span> Energy conversion technologies</a>
+  <ul class="collapse">
+  <li><a href="#cogeneration" id="toc-cogeneration" class="nav-link" data-scroll-target="#cogeneration"><span class="header-section-number">5.2.1</span> Cogeneration</a></li>
+  <li><a href="#fuel-cells" id="toc-fuel-cells" class="nav-link" data-scroll-target="#fuel-cells"><span class="header-section-number">5.2.2</span> Fuel cells</a></li>
+  <li><a href="#pv-panels" id="toc-pv-panels" class="nav-link" data-scroll-target="#pv-panels"><span class="header-section-number">5.2.3</span> PV panels</a></li>
+  <li><a href="#boiler" id="toc-boiler" class="nav-link" data-scroll-target="#boiler"><span class="header-section-number">5.2.4</span> Boiler</a></li>
+  <li><a href="#electric-boiler" id="toc-electric-boiler" class="nav-link" data-scroll-target="#electric-boiler"><span class="header-section-number">5.2.5</span> Electric boiler</a></li>
+  </ul></li>
+  <li><a href="#integration-of-heat-recovery-from-nlp-model" id="toc-integration-of-heat-recovery-from-nlp-model" class="nav-link" data-scroll-target="#integration-of-heat-recovery-from-nlp-model"><span class="header-section-number">5.3</span> Integration of heat recovery from NLP model</a></li>
+  <li><a href="#milp-optimisation-of-the-epfl-energy-system" id="toc-milp-optimisation-of-the-epfl-energy-system" class="nav-link" data-scroll-target="#milp-optimisation-of-the-epfl-energy-system"><span class="header-section-number">5.4</span> MILP optimisation of the EPFL energy system</a>
+  <ul class="collapse">
+  <li><a href="#objective-function" id="toc-objective-function" class="nav-link" data-scroll-target="#objective-function"><span class="header-section-number">5.4.1</span> Objective function</a></li>
+  <li><a href="#model-equations" id="toc-model-equations" class="nav-link" data-scroll-target="#model-equations"><span class="header-section-number">5.4.2</span> Model equations</a></li>
+  <li><a href="#sec-MILP-results" id="toc-sec-MILP-results" class="nav-link" data-scroll-target="#sec-MILP-results"><span class="header-section-number">5.4.3</span> MILP results</a></li>
+  </ul></li>
+  <li><a href="#scenario-analysis" id="toc-scenario-analysis" class="nav-link" data-scroll-target="#scenario-analysis"><span class="header-section-number">5.5</span> Scenario analysis</a>
+  <ul class="collapse">
+  <li><a href="#scenario-1-minimize-operating-costs" id="toc-scenario-1-minimize-operating-costs" class="nav-link" data-scroll-target="#scenario-1-minimize-operating-costs"><span class="header-section-number">5.5.1</span> Scenario 1: Minimize operating costs</a></li>
+  <li><a href="#scenario-2-rising-natural-gas-prices-and-climate-protests" id="toc-scenario-2-rising-natural-gas-prices-and-climate-protests" class="nav-link" data-scroll-target="#scenario-2-rising-natural-gas-prices-and-climate-protests"><span class="header-section-number">5.5.2</span> Scenario 2: Rising natural gas prices and climate protests</a></li>
+  <li><a href="#scenario-3-capital-investment-restrictions" id="toc-scenario-3-capital-investment-restrictions" class="nav-link" data-scroll-target="#scenario-3-capital-investment-restrictions"><span class="header-section-number">5.5.3</span> Scenario 3: Capital investment restrictions</a></li>
+  </ul></li>
+  <li><a href="#multi-objective-optimization" id="toc-multi-objective-optimization" class="nav-link" data-scroll-target="#multi-objective-optimization"><span class="header-section-number">5.6</span> Multi-objective optimization</a></li>
+  <li><a href="#sensitivity-analysis" id="toc-sensitivity-analysis" class="nav-link" data-scroll-target="#sensitivity-analysis"><span class="header-section-number">5.7</span> Sensitivity Analysis</a></li>
+  <li><a href="#summary-of-milp-optimization" id="toc-summary-of-milp-optimization" class="nav-link" data-scroll-target="#summary-of-milp-optimization"><span class="header-section-number">5.8</span> Summary of MILP optimization</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+
+<section id="introduction" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="introduction"><span class="header-section-number">5.1</span> Introduction</h2>
+<p>The finale part of the report concerns itself with the implementation of various technologies in the EPFL heating system. Using mixed integer linear programming (MILP), a model will be build to choose the best combination of utilities for different scenarios. After the different scenarios have been analysed, a multi-objective optimisation will be executed. Finally, a sensitivity analysis will be conducted to analysis how the solution varies with changing paramters.</p>
+</section>
+<section id="energy-conversion-technologies" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="energy-conversion-technologies"><span class="header-section-number">5.2</span> Energy conversion technologies</h2>
+<p>The following introduced energy conversion technologies will be considered for the new heating system of EPFL. The utilities will be briefly described and then their implimentation in the AMPL model will be presented.</p>
+<section id="cogeneration" class="level3" data-number="5.2.1">
+<h3 data-number="5.2.1" class="anchored" data-anchor-id="cogeneration"><span class="header-section-number">5.2.1</span> Cogeneration</h3>
+<p>A cogeneration enigne, aslo known as combined heat and power (CHP), uses one fuel source to produce heat and power. By producing both heat and power, the CHP saves greenhouse emissions compared to a seperate unit. For this model, natural gas is considered as the fuel of this unit. In a gas turbine,the natural gas is mixed with air, compressed and then ignited. A generator produces electricity and through a heat recovery steam generator the hot water loop of the EPFL is also heated.</p>
+<p>This unit will be sized such that the electricity demand of the campus at a given time is fulfilled.</p>
+<p>Here are the assumptions for the modeling of the utility:</p>
+<ul>
+<li><p>lifetime is assumed to be 20 years</p></li>
+<li><p>Thermal efficiency <span class="math inline">\(\eta_{thermal} = 0.45\)</span> and electrical efficiency <span class="math inline">\(\eta_{elec} = 0.45\)</span>, such that the unit has a total efficiency of <span class="math inline">\(\eta_{chp} = \eta_{thermal} + \eta_{elec} = 0.8\)</span> (<span class="citation" data-cites="chp_eff">Ken Darrow and Hampson (<a href="#ref-chp_eff" role="doc-biblioref">2017</a>)</span>)</p></li>
+</ul>
+<p>From Professors Maréchal’s lecture in Advanced Energetics about Utility integration, the costs for the sizing are given. For an installed capacity between 100 - 10 000 kW, the CAPEX ranges from 800 - 4000 CHF/kW. From this the fixed part (cinv1) and variable part (cinv2) of the investment has been extracted.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-cogen-cost" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cogen-cost-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Figures/cogeneration_cost.png" class="img-fluid figure-img" style="width:80.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cogen-cost-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.1: Investment cost vs installed capacity for cogeneration unit
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="fuel-cells" class="level3" data-number="5.2.2">
+<h3 data-number="5.2.2" class="anchored" data-anchor-id="fuel-cells"><span class="header-section-number">5.2.2</span> Fuel cells</h3>
+<p>Solid oxide fuel cells (SOFC) are electrochemical devices that convert the chemical energy of fuel into electrical energy. They normally operate in the range of 500-800°C. Heat can be recovered from the high temperature exhaust gas of SOFC, thereby increasing the energy efficiency of process <span class="citation" data-cites="Roy2024">(<a href="#ref-Roy2024" role="doc-biblioref">Roy et al. 2024</a>)</span>.</p>
+<p>Fuel cells hold the promise of power generation with higher efficiency and lower pollution. They offer superior performance compared to heat engines, partly due to the fact that these devices can bypass the limitations imposed by carnot efficiecny <span class="citation" data-cites="Roy2024">(<a href="#ref-Roy2024" role="doc-biblioref">Roy et al. 2024</a>)</span>. The higher efficiency of these devices also mean that the greenhouse gas emission can be significantly reduced <span class="citation" data-cites="Pina2023">(<a href="#ref-Pina2023" role="doc-biblioref">Pina et al. 2023</a>)</span>. Another advantage of fuel cells is the fuel flexibility. They can be operated with a wide variety of fuels such as natural gas, ammonia, hydrogen, biogas etc <span class="citation" data-cites="Pina2023 Roy2024">(<a href="#ref-Pina2023" role="doc-biblioref">Pina et al. 2023</a>; <a href="#ref-Roy2024" role="doc-biblioref">Roy et al. 2024</a>)</span>.</p>
+<p>The system is usually made up of SOFC stack and Balance of Plant components (BoP). The BoP include blowers or compressors for air and fuel, combustor to completely burn the fuel and heat exchangers to recover heat from the exhaust gases. Pina et al.&nbsp;(2023), compared the performance of SOFC utilizing five different fuels (methane, methanol, diesel, ammonia and hydrogen) for cruise ships. They showed that by cathode off-gas recirculation (COGR), the investment costs for the SOFC unit are reduced. Further with COGR, the amount of air required for each fuel type reduced, which resulted in higher quality exhaust gas at combustor outlet.</p>
+<p>For the modeling of fuel cells, a black box model is used. The fuel cell is modeled as single <strong>100 kW</strong> unit, and it is assumed that these 100 kW units will be stacked together to provide the energy demand of the campus. <strong>Hydrogen</strong> is the fuel selected to operate the fuel cells despite it being the most expensive fuel in Pina’s studies. The decision to study hydrogen is based on its low environmental impact (depending on the source of hydrogen it can be completely carbon neutral). The following efficiencies are used to model the fuel cell <span class="citation" data-cites="Pina2023">(<a href="#ref-Pina2023" role="doc-biblioref">Pina et al. 2023</a>)</span>:</p>
+<ul>
+<li>Electrical efficiency <span class="math inline">\(\eta_{\mathrm{elec}}\)</span> = 0.4676. In their paper, Pina defined the efficiency to be 0.49. However, because here the fuel cell is modeled as black box and we are only interested in finding how much net electrical power could be obtained this value was reduced to account for electrical energy needed for BoP components.</li>
+<li>Thermal efficiency <span class="math inline">\(\eta_{\mathrm{thermal}}\)</span> = 0.4117. The thermal efficiency is based on how much heat was recoverd in Pina’s paper to how much fuel flow into the system.</li>
+</ul>
+<p>Based on the data from Pina <span class="citation" data-cites="Pina2023">(<a href="#ref-Pina2023" role="doc-biblioref">Pina et al. 2023</a>)</span>, the following costs are estimated for a single 100 kW module:</p>
+<ul>
+<li>Fixed investment costs : <span class="math inline">\(\mathrm{c_{inv1}}\)</span> = 0 CHF/year</li>
+<li>Variable investment costs : <span class="math inline">\(\mathrm{c_{inv2}}\)</span> = 101,886 CHF/year</li>
+</ul>
+<p>The variable costs also include the costs for stack replacement assuming stack lifetime of 5 year. The model estimates the number of stacks required to meet the energy demand of campus.</p>
+</section>
+<section id="pv-panels" class="level3" data-number="5.2.3">
+<h3 data-number="5.2.3" class="anchored" data-anchor-id="pv-panels"><span class="header-section-number">5.2.3</span> PV panels</h3>
+<p>Photovoltaic (PV) systems provide a renewable energy source by converting solar radiation into electricity using silicon-based solar cells. With typical efficiencies around <span class="math inline">\(\eta = 0.18\)</span>, these systems are scalable from small residential setups to large utility-scale installations.</p>
+<p>Key characteristics include:</p>
+<ul>
+<li><p><strong>Annual Degradation</strong>: Approximately 0.5% (<span class="math inline">\(\mathrm{degradation} = 0.005\)</span>), affecting long-term performance.</p></li>
+<li><p><strong>Area Requirement</strong>: About 7 m<span class="math inline">\(^2\)</span> per kilowatt of capacity.</p></li>
+<li><p><strong>Capacity Factor</strong>: Generally around 0.15 in moderate solar resource locations.</p></li>
+<li><p><strong>Lifespan</strong>: PV panels typically have a lifespan of 25 years or more.</p></li>
+</ul>
+<p><strong>Investment Costs</strong>: -</p>
+<ul>
+<li><p>Fixed investment cost: <span class="math inline">\(c_{\text{inv1}} = 143.28 \text{ CHF}\)</span></p></li>
+<li><p>Variable investment cost: <span class="math inline">\(c_{\text{inv2}} = 457.59 \text{ CHF/kW}\)</span></p></li>
+</ul>
+<p>Operational and maintenance costs are relatively low, estimated at about <span class="math inline">\(10 \text{ CHF/kW/year}\)</span>.</p>
+<p>From an environmental perspective, PV systems produce no direct emissions during operation, with lifecycle emissions from manufacturing estimated at <span class="math inline">\(40 \text{ kg CO}_2\text{eq/kW}\)</span>. This positions PV as a key technology for reducing carbon footprints in energy systems.</p>
+</section>
+<section id="boiler" class="level3" data-number="5.2.4">
+<h3 data-number="5.2.4" class="anchored" data-anchor-id="boiler"><span class="header-section-number">5.2.4</span> Boiler</h3>
+<p>A boiler uses natural gas as a heat source for heating water or other fluids. The heated fluid can then be used either as a heat source, as for instance in water bearing systems or in other applications.</p>
+<p>The heat provided by the fuel needed to obtain the wanted heat supply is calculated as following:</p>
+<p><span class="math inline">\(\mathrm{Q{fuel} [W]= Q_{heating supply}/ \eta_{boiler}}\)</span>, where <span class="math inline">\(\eta_{boiler}\)</span> is given as 0.9 <span class="citation" data-cites="Stadler2018">(<a href="#ref-Stadler2018" role="doc-biblioref">Stadler et al. 2018</a>)</span>.</p>
+<p>The cost of installing a boiler is given by a fixed cost and an installation cost:</p>
+<p><span class="math inline">\(\mathrm{CAPEX_{boiler}[CHF]= c_{fixed} + c_{variable}*S}\)</span> given in [CHF]</p>
+<p>where</p>
+<ul>
+<li><span class="math inline">\(\mathrm{S}\)</span> - installed capcity of the boiler given in [kW]</li>
+<li><span class="math inline">\(\mathrm{c_{fixed}}\)</span>= 79750 CHF</li>
+<li><span class="math inline">\(\mathrm{c_{variable}}\)</span>= 288.62 CHF/kW</li>
+</ul>
+</section>
+<section id="electric-boiler" class="level3" data-number="5.2.5">
+<h3 data-number="5.2.5" class="anchored" data-anchor-id="electric-boiler"><span class="header-section-number">5.2.5</span> Electric boiler</h3>
+<p>Electric boilers offer a promising alternative to traditional natural gas boilers in energy systems. By using electricity to heat water via electrode systems, electric boilers provide controlled output from 0 to 100% of their nominal capacity, making them highly flexible for auxiliary services or leveraging spot market electricity prices <span class="citation" data-cites="danish2019technology">(<a href="#ref-danish2019technology" role="doc-biblioref">Agency 2019</a>)</span>.</p>
+<p>These devices, typically in the megawatt size range, are suitable for district heating systems, producing hot water or steam. Like natural gas boilers, electric boilers are often used as peak load units, but they do not rely on fossil fuels. This electrification could contributes significantly to reducing carbon emissions in scenarios targeting minimal environmental impact.</p>
+<p>Electric boilers also demonstrate a high conversion efficiency from electrical to thermal energy, with efficiencies reaching <span class="math inline">\(\eta = 0.99\)</span> <span class="citation" data-cites="soysal2016electric">(<a href="#ref-soysal2016electric" role="doc-biblioref">Soysal et al. 2016</a>)</span>. This efficiency allows a lower minimum temperature set point of <span class="math inline">\(T_{\text{min}} = 70^\circ\text{C}\)</span> <span class="citation" data-cites="jiang2013modeling">(<a href="#ref-jiang2013modeling" role="doc-biblioref">Jiang et al. 2013</a>)</span>. However, from an exergy perspective, their efficiency is moderate, emphasizing the importance of context in evaluating their effectiveness.</p>
+<p>Although uncertainty remains in the potential installed capacity, electrode boilers connected to medium- or high-voltage grids (at 10 kV) can achieve production capacities of several megawatts. For this project, an installed capacity of at least 10 MW is assumed, with a lifetime of 20 years <span class="citation" data-cites="danish2019technology">(<a href="#ref-danish2019technology" role="doc-biblioref">Agency 2019</a>)</span>.</p>
+<p>Investment costs are influenced by electricity prices and installation specifics. Based on average installation costs <span class="citation" data-cites="fixrEBcosts">(<a href="#ref-fixrEBcosts" role="doc-biblioref">Graham 2022</a>)</span> and nominal investments <span class="citation" data-cites="soysal2016electric">(<a href="#ref-soysal2016electric" role="doc-biblioref">Soysal et al. 2016</a>)</span>, the following costs are estimated:</p>
+<ul>
+<li><p>Fixed investment cost: <span class="math inline">\(c_{\text{inv1}} = 435.92 \, \text{CHF/year}\)</span></p></li>
+<li><p>Variable investment cost: <span class="math inline">\(c_{\text{inv2}} = 75,000 \, \text{CHF/year}\)</span></p></li>
+</ul>
+<p>These estimates provide a baseline for integrating electric boilers into energy optimization models, considering both economic and environmental impacts.</p>
+</section>
+</section>
+<section id="integration-of-heat-recovery-from-nlp-model" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="integration-of-heat-recovery-from-nlp-model"><span class="header-section-number">5.3</span> Integration of heat recovery from NLP model</h2>
+<p>In <a href="02.00-Heat_recovery.html" class="quarto-xref"><span>Chapter 3</span></a>, various heat integration options were evaluated using a non linear model. From the evaluated concepts, ventilation heat recovery with heat pump was deemed as most suitable in terms of energy savings and environmental impact.</p>
+<p>For integration of ventilation with heat pump, the temperature results from the AMPL model (<a href="02.00-Heat_recovery.html#tbl-HPvent-stream-table" class="quarto-xref">Table&nbsp;<span>3.9</span></a>) are sent as parameters to the full AMPL model. This way, the heat exchanger area can be modeled as linear function of heat exchanged. Next, the costs of both heat exchanger and heat pump are linearized as shown in <a href="#fig-Linear-HX-cost" class="quarto-xref">Figure&nbsp;<span>5.2</span></a>, <a href="#fig-Linear-HP-cost" class="quarto-xref">Figure&nbsp;<span>5.3</span></a> respectively. The cost parameters are reported in <a href="#tbl-inv-cost-par" class="quarto-xref">Table&nbsp;<span>5.3</span></a>.</p>
+<div class="cell">
+<div id="fig-Linear-HX-cost" class="cell-output-display quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-Linear-HX-cost-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="plotly html-widget html-fill-item" id="htmlwidget-72df07658e8c7b3356ca" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-72df07658e8c7b3356ca">{"x":{"data":[{"x":[10,50,100,200,350,500,650,800,1000,1500,2500,4000,6000,8000,10000],"y":[3034.2425310164995,7969.5223730192938,12079.537087960607,18309.154479998662,25614.808783340432,31727.240025855044,37136.272127968914,42063.391265122111,48089.503316840288,61334.530753223327,83332.478084900373,110480.66670535777,140909.74916148538,167457.37680442454,191447.76098790308],"text":["Area:    10<br />Cp:   3034.243","Area:    50<br />Cp:   7969.522","Area:   100<br />Cp:  12079.537","Area:   200<br />Cp:  18309.154","Area:   350<br />Cp:  25614.809","Area:   500<br />Cp:  31727.240","Area:   650<br />Cp:  37136.272","Area:   800<br />Cp:  42063.391","Area:  1000<br />Cp:  48089.503","Area:  1500<br />Cp:  61334.531","Area:  2500<br />Cp:  83332.478","Area:  4000<br />Cp: 110480.667","Area:  6000<br />Cp: 140909.749","Area:  8000<br />Cp: 167457.377","Area: 10000<br />Cp: 191447.761"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(54,4,56,1)","opacity":1,"size":7.559055118110237,"symbol":"diamond","line":{"width":1.8897637795275593,"color":"rgba(54,4,56,1)"}},"hoveron":"points","showlegend":false,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0,100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000,2100,2200,2300,2400,2500,2600,2700,2800,2900,3000,3100,3200,3300,3400,3500,3600,3700,3800,3900,4000,4100,4200,4300,4400,4500,4600,4700,4800,4900,5000,5100,5200,5300,5400,5500,5600,5700,5800,5900,6000,6100,6200,6300,6400,6500,6600,6700,6800,6900,7000,7100,7200,7300,7400,7500,7600,7700,7800,7900,8000,8100,8200,8300,8400,8500,8600,8700,8800,8900,9000,9100,9200,9300,9400,9500,9600,9700,9800,9900,10000],"y":[51317.326657186022,52750.249275081565,54183.171892977109,55616.094510872659,57049.017128768202,58481.939746663746,59914.862364559289,61347.784982454832,62780.707600350383,64213.630218245926,65646.552836141476,67079.47545403702,68512.398071932563,69945.320689828106,71378.243307723649,72811.165925619192,74244.088543514736,75677.011161410279,77109.933779305837,78542.856397201365,79975.779015096923,81408.701632992466,82841.62425088801,84274.546868783553,85707.469486679096,87140.392104574639,88573.314722470182,90006.23734036574,91439.159958261269,92872.082576156827,94305.00519405237,95737.927811947913,97170.850429843456,98603.773047739,100036.69566563454,101469.61828353009,102902.54090142564,104335.46351932117,105768.38613721673,107201.30875511226,108634.23137300782,110067.15399090336,111500.0766087989,112932.99922669445,114365.92184458999,115798.84446248555,117231.76708038108,118664.68969827663,120097.61231617216,121530.53493406772,122963.45755196325,124396.38016985881,125829.30278775436,127262.22540564989,128695.14802354545,130128.07064144098,131560.99325933654,132993.91587723207,134426.83849512762,135859.76111302315,137292.68373091871,138725.60634881427,140158.5289667098,141591.45158460535,143024.37420250088,144457.29682039644,145890.21943829197,147323.14205618753,148756.06467408306,150188.98729197861,151621.90990987417,153054.8325277697,154487.75514566526,155920.67776356079,157353.60038145634,158786.52299935187,160219.44561724743,161652.36823514296,163085.29085303852,164518.21347093408,165951.1360888296,167384.05870672516,168816.98132462069,170249.90394251625,171682.82656041178,173115.74917830733,174548.67179620286,175981.59441409842,177414.51703199398,178847.43964988951,180280.36226778507,181713.28488568059,183146.20750357615,184579.13012147171,186012.05273936724,187444.9753572628,188877.89797515832,190310.82059305388,191743.74321094941,193176.66582884497,194609.5884467405],"text":["Area:     0<br />Cp:  51317.33","Area:   100<br />Cp:  52750.25","Area:   200<br />Cp:  54183.17","Area:   300<br />Cp:  55616.09","Area:   400<br />Cp:  57049.02","Area:   500<br />Cp:  58481.94","Area:   600<br />Cp:  59914.86","Area:   700<br />Cp:  61347.78","Area:   800<br />Cp:  62780.71","Area:   900<br />Cp:  64213.63","Area:  1000<br />Cp:  65646.55","Area:  1100<br />Cp:  67079.48","Area:  1200<br />Cp:  68512.40","Area:  1300<br />Cp:  69945.32","Area:  1400<br />Cp:  71378.24","Area:  1500<br />Cp:  72811.17","Area:  1600<br />Cp:  74244.09","Area:  1700<br />Cp:  75677.01","Area:  1800<br />Cp:  77109.93","Area:  1900<br />Cp:  78542.86","Area:  2000<br />Cp:  79975.78","Area:  2100<br />Cp:  81408.70","Area:  2200<br />Cp:  82841.62","Area:  2300<br />Cp:  84274.55","Area:  2400<br />Cp:  85707.47","Area:  2500<br />Cp:  87140.39","Area:  2600<br />Cp:  88573.31","Area:  2700<br />Cp:  90006.24","Area:  2800<br />Cp:  91439.16","Area:  2900<br />Cp:  92872.08","Area:  3000<br />Cp:  94305.01","Area:  3100<br />Cp:  95737.93","Area:  3200<br />Cp:  97170.85","Area:  3300<br />Cp:  98603.77","Area:  3400<br />Cp: 100036.70","Area:  3500<br />Cp: 101469.62","Area:  3600<br />Cp: 102902.54","Area:  3700<br />Cp: 104335.46","Area:  3800<br />Cp: 105768.39","Area:  3900<br />Cp: 107201.31","Area:  4000<br />Cp: 108634.23","Area:  4100<br />Cp: 110067.15","Area:  4200<br />Cp: 111500.08","Area:  4300<br />Cp: 112933.00","Area:  4400<br />Cp: 114365.92","Area:  4500<br />Cp: 115798.84","Area:  4600<br />Cp: 117231.77","Area:  4700<br />Cp: 118664.69","Area:  4800<br />Cp: 120097.61","Area:  4900<br />Cp: 121530.53","Area:  5000<br />Cp: 122963.46","Area:  5100<br />Cp: 124396.38","Area:  5200<br />Cp: 125829.30","Area:  5300<br />Cp: 127262.23","Area:  5400<br />Cp: 128695.15","Area:  5500<br />Cp: 130128.07","Area:  5600<br />Cp: 131560.99","Area:  5700<br />Cp: 132993.92","Area:  5800<br />Cp: 134426.84","Area:  5900<br />Cp: 135859.76","Area:  6000<br />Cp: 137292.68","Area:  6100<br />Cp: 138725.61","Area:  6200<br />Cp: 140158.53","Area:  6300<br />Cp: 141591.45","Area:  6400<br />Cp: 143024.37","Area:  6500<br />Cp: 144457.30","Area:  6600<br />Cp: 145890.22","Area:  6700<br />Cp: 147323.14","Area:  6800<br />Cp: 148756.06","Area:  6900<br />Cp: 150188.99","Area:  7000<br />Cp: 151621.91","Area:  7100<br />Cp: 153054.83","Area:  7200<br />Cp: 154487.76","Area:  7300<br />Cp: 155920.68","Area:  7400<br />Cp: 157353.60","Area:  7500<br />Cp: 158786.52","Area:  7600<br />Cp: 160219.45","Area:  7700<br />Cp: 161652.37","Area:  7800<br />Cp: 163085.29","Area:  7900<br />Cp: 164518.21","Area:  8000<br />Cp: 165951.14","Area:  8100<br />Cp: 167384.06","Area:  8200<br />Cp: 168816.98","Area:  8300<br />Cp: 170249.90","Area:  8400<br />Cp: 171682.83","Area:  8500<br />Cp: 173115.75","Area:  8600<br />Cp: 174548.67","Area:  8700<br />Cp: 175981.59","Area:  8800<br />Cp: 177414.52","Area:  8900<br />Cp: 178847.44","Area:  9000<br />Cp: 180280.36","Area:  9100<br />Cp: 181713.28","Area:  9200<br />Cp: 183146.21","Area:  9300<br />Cp: 184579.13","Area:  9400<br />Cp: 186012.05","Area:  9500<br />Cp: 187444.98","Area:  9600<br />Cp: 188877.90","Area:  9700<br />Cp: 190310.82","Area:  9800<br />Cp: 191743.74","Area:  9900<br />Cp: 193176.67","Area: 10000<br />Cp: 194609.59"],"type":"scatter","mode":"lines","line":{"width":1.8897637795275593,"color":"rgba(9,196,180,1)","dash":"solid"},"hoveron":"points","showlegend":false,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null}],"layout":{"margin":{"t":26.228310502283104,"r":7.3059360730593621,"b":40.182648401826491,"l":60.639269406392714},"plot_bgcolor":"rgba(235,235,235,1)","paper_bgcolor":"rgba(255,255,255,1)","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724},"xaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[-500,10500],"tickmode":"array","ticktext":["0","2500","5000","7500","10000"],"tickvals":[0,2500,5000,7500,10000],"categoryorder":"array","categoryarray":["0","2500","5000","7500","10000"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.6529680365296811,"tickwidth":0.66417600664176002,"showticklabels":true,"tickfont":{"color":"rgba(77,77,77,1)","family":"","size":11.68949771689498},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":true,"gridcolor":"rgba(255,255,255,1)","gridwidth":0.66417600664176002,"zeroline":false,"anchor":"y","title":{"text":"Heat exchanger area [m<sup>2<\/sup>]","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}},"hoverformat":".2f"},"yaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[-6544.5247647696997,204188.35574252671],"tickmode":"array","ticktext":["0","50000","100000","150000","200000"],"tickvals":[0,50000,100000.00000000001,150000,200000],"categoryorder":"array","categoryarray":["0","50000","100000","150000","200000"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.6529680365296811,"tickwidth":0.66417600664176002,"showticklabels":true,"tickfont":{"color":"rgba(77,77,77,1)","family":"","size":11.68949771689498},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":true,"gridcolor":"rgba(255,255,255,1)","gridwidth":0.66417600664176002,"zeroline":false,"anchor":"x","title":{"text":"Annualized cost [CHF/yr]","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}},"hoverformat":".2f"},"shapes":[{"type":"rect","fillcolor":null,"line":{"color":null,"width":0,"linetype":[]},"yref":"paper","xref":"paper","x0":0,"x1":1,"y0":0,"y1":1}],"showlegend":false,"legend":{"bgcolor":"rgba(255,255,255,1)","bordercolor":"transparent","borderwidth":1.8897637795275593,"font":{"color":"rgba(0,0,0,1)","family":"","size":11.68949771689498}},"hovermode":"closest","barmode":"relative"},"config":{"doubleClick":"reset","modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"source":"A","attrs":{"13b8b54ee666b":{"x":{},"y":{},"type":"scatter"},"13b8b723ab1f5":{"x":{},"y":{}}},"cur_data":"13b8b54ee666b","visdat":{"13b8b54ee666b":["function (y) ","x"],"13b8b723ab1f5":["function (y) ","x"]},"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-Linear-HX-cost-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.2: Linearization of exchanger cost
+</figcaption>
+</figure>
+</div>
+</div>
+<div class="cell">
+<div id="fig-Linear-HP-cost" class="cell-output-display quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-Linear-HP-cost-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="plotly html-widget html-fill-item" id="htmlwidget-604cec973e7220aed6cc" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-604cec973e7220aed6cc">{"x":{"data":[{"x":[10,50,100,200,400,600,800,1000],"y":[4197.0918911109229,16484.393818657445,29713.135109848266,53557.953526737707,96538.260784923405,136262.71584282242,174010.30438411437,210352.88741853397],"text":["Sizing:   10<br />Cost:   4197.092","Sizing:   50<br />Cost:  16484.394","Sizing:  100<br />Cost:  29713.135","Sizing:  200<br />Cost:  53557.954","Sizing:  400<br />Cost:  96538.261","Sizing:  600<br />Cost: 136262.716","Sizing:  800<br />Cost: 174010.304","Sizing: 1000<br />Cost: 210352.887"],"type":"scatter","mode":"markers","marker":{"autocolorscale":false,"color":"rgba(224,6,115,1)","opacity":1,"size":7.559055118110237,"symbol":"square-cross-open","line":{"width":1.8897637795275593,"color":"rgba(224,6,115,1)"}},"hoveron":"points","showlegend":false,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"x":[0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200,210,220,230,240,250,260,270,280,290,300,310,320,330,340,350,360,370,380,390,400,410,420,430,440,450,460,470,480,490,500,510,520,530,540,550,560,570,580,590,600,610,620,630,640,650,660,670,680,690,700,710,720,730,740,750,760,770,780,790,800,810,820,830,840,850,860,870,880,890,900,910,920,930,940,950,960,970,980,990,1000],"y":[16825.850976591373,18781.160533505288,20736.470090419207,22691.779647333125,24647.08920424704,26602.398761160955,28557.708318074874,30513.017874988793,32468.327431902708,34423.636988816623,36378.946545730541,38334.25610264446,40289.565659558371,42244.875216472297,44200.184773386209,46155.49433030012,48110.803887214046,50066.113444127957,52021.423001041883,53976.732557955795,55932.042114869706,57887.351671783632,59842.661228697543,61797.970785611455,63753.280342525381,65708.589899439292,67663.899456353218,69619.209013267129,71574.518570181041,73529.828127094966,75485.137684008878,77440.447240922789,79395.756797836715,81351.066354750626,83306.375911664552,85261.685468578464,87216.99502549239,89172.304582406301,91127.614139320212,93082.923696234138,95038.23325314805,96993.542810061961,98948.852366975887,100904.1619238898,102859.47148080371,104814.78103771764,106770.09059463155,108725.40015154547,110680.70970845938,112636.0192653733,114591.32882228722,116546.63837920113,118501.94793611506,120457.25749302897,122412.56704994288,124367.87660685681,126323.18616377072,128278.49572068463,130233.80527759856,132189.11483451247,134144.42439142638,136099.73394834029,138055.0435052542,140010.35306216814,141965.66261908205,143920.97217599596,145876.28173290988,147831.59128982379,149786.90084673773,151742.21040365164,153697.51996056555,155652.82951747946,157608.1390743934,159563.44863130731,161518.75818822123,163474.06774513514,165429.37730204905,167384.68685896296,169339.9964158769,171295.30597279081,173250.61552970472,175205.92508661863,177161.23464353255,179116.54420044649,181071.8537573604,183027.16331427431,184982.47287118822,186937.78242810213,188893.09198501604,190848.40154192998,192803.71109884389,194759.02065575781,196714.33021267172,198669.63976958563,200624.94932649957,202580.25888341348,204535.56844032739,206490.8779972413,208446.18755415521,210401.49711106915,212356.80666798307],"text":["Sizing:    0<br />Cp:  16825.85","Sizing:   10<br />Cp:  18781.16","Sizing:   20<br />Cp:  20736.47","Sizing:   30<br />Cp:  22691.78","Sizing:   40<br />Cp:  24647.09","Sizing:   50<br />Cp:  26602.40","Sizing:   60<br />Cp:  28557.71","Sizing:   70<br />Cp:  30513.02","Sizing:   80<br />Cp:  32468.33","Sizing:   90<br />Cp:  34423.64","Sizing:  100<br />Cp:  36378.95","Sizing:  110<br />Cp:  38334.26","Sizing:  120<br />Cp:  40289.57","Sizing:  130<br />Cp:  42244.88","Sizing:  140<br />Cp:  44200.18","Sizing:  150<br />Cp:  46155.49","Sizing:  160<br />Cp:  48110.80","Sizing:  170<br />Cp:  50066.11","Sizing:  180<br />Cp:  52021.42","Sizing:  190<br />Cp:  53976.73","Sizing:  200<br />Cp:  55932.04","Sizing:  210<br />Cp:  57887.35","Sizing:  220<br />Cp:  59842.66","Sizing:  230<br />Cp:  61797.97","Sizing:  240<br />Cp:  63753.28","Sizing:  250<br />Cp:  65708.59","Sizing:  260<br />Cp:  67663.90","Sizing:  270<br />Cp:  69619.21","Sizing:  280<br />Cp:  71574.52","Sizing:  290<br />Cp:  73529.83","Sizing:  300<br />Cp:  75485.14","Sizing:  310<br />Cp:  77440.45","Sizing:  320<br />Cp:  79395.76","Sizing:  330<br />Cp:  81351.07","Sizing:  340<br />Cp:  83306.38","Sizing:  350<br />Cp:  85261.69","Sizing:  360<br />Cp:  87217.00","Sizing:  370<br />Cp:  89172.30","Sizing:  380<br />Cp:  91127.61","Sizing:  390<br />Cp:  93082.92","Sizing:  400<br />Cp:  95038.23","Sizing:  410<br />Cp:  96993.54","Sizing:  420<br />Cp:  98948.85","Sizing:  430<br />Cp: 100904.16","Sizing:  440<br />Cp: 102859.47","Sizing:  450<br />Cp: 104814.78","Sizing:  460<br />Cp: 106770.09","Sizing:  470<br />Cp: 108725.40","Sizing:  480<br />Cp: 110680.71","Sizing:  490<br />Cp: 112636.02","Sizing:  500<br />Cp: 114591.33","Sizing:  510<br />Cp: 116546.64","Sizing:  520<br />Cp: 118501.95","Sizing:  530<br />Cp: 120457.26","Sizing:  540<br />Cp: 122412.57","Sizing:  550<br />Cp: 124367.88","Sizing:  560<br />Cp: 126323.19","Sizing:  570<br />Cp: 128278.50","Sizing:  580<br />Cp: 130233.81","Sizing:  590<br />Cp: 132189.11","Sizing:  600<br />Cp: 134144.42","Sizing:  610<br />Cp: 136099.73","Sizing:  620<br />Cp: 138055.04","Sizing:  630<br />Cp: 140010.35","Sizing:  640<br />Cp: 141965.66","Sizing:  650<br />Cp: 143920.97","Sizing:  660<br />Cp: 145876.28","Sizing:  670<br />Cp: 147831.59","Sizing:  680<br />Cp: 149786.90","Sizing:  690<br />Cp: 151742.21","Sizing:  700<br />Cp: 153697.52","Sizing:  710<br />Cp: 155652.83","Sizing:  720<br />Cp: 157608.14","Sizing:  730<br />Cp: 159563.45","Sizing:  740<br />Cp: 161518.76","Sizing:  750<br />Cp: 163474.07","Sizing:  760<br />Cp: 165429.38","Sizing:  770<br />Cp: 167384.69","Sizing:  780<br />Cp: 169340.00","Sizing:  790<br />Cp: 171295.31","Sizing:  800<br />Cp: 173250.62","Sizing:  810<br />Cp: 175205.93","Sizing:  820<br />Cp: 177161.23","Sizing:  830<br />Cp: 179116.54","Sizing:  840<br />Cp: 181071.85","Sizing:  850<br />Cp: 183027.16","Sizing:  860<br />Cp: 184982.47","Sizing:  870<br />Cp: 186937.78","Sizing:  880<br />Cp: 188893.09","Sizing:  890<br />Cp: 190848.40","Sizing:  900<br />Cp: 192803.71","Sizing:  910<br />Cp: 194759.02","Sizing:  920<br />Cp: 196714.33","Sizing:  930<br />Cp: 198669.64","Sizing:  940<br />Cp: 200624.95","Sizing:  950<br />Cp: 202580.26","Sizing:  960<br />Cp: 204535.57","Sizing:  970<br />Cp: 206490.88","Sizing:  980<br />Cp: 208446.19","Sizing:  990<br />Cp: 210401.50","Sizing: 1000<br />Cp: 212356.81"],"type":"scatter","mode":"lines","line":{"width":1.8897637795275593,"color":"rgba(32,209,233,1)","dash":"solid"},"hoveron":"points","showlegend":false,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null}],"layout":{"margin":{"t":26.228310502283104,"r":7.3059360730593621,"b":40.182648401826491,"l":60.639269406392714},"plot_bgcolor":"rgba(235,235,235,1)","paper_bgcolor":"rgba(255,255,255,1)","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724},"xaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[-50,1050],"tickmode":"array","ticktext":["0","250","500","750","1000"],"tickvals":[0,250,500,750,1000],"categoryorder":"array","categoryarray":["0","250","500","750","1000"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.6529680365296811,"tickwidth":0.66417600664176002,"showticklabels":true,"tickfont":{"color":"rgba(77,77,77,1)","family":"","size":11.68949771689498},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":true,"gridcolor":"rgba(255,255,255,1)","gridwidth":0.66417600664176002,"zeroline":false,"anchor":"y","title":{"text":"Electricity [kW]","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}},"hoverformat":".2f"},"yaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[-6210.8938477326838,222764.79240682669],"tickmode":"array","ticktext":["0","50000","100000","150000","200000"],"tickvals":[0,50000,100000,150000,200000],"categoryorder":"array","categoryarray":["0","50000","100000","150000","200000"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.6529680365296811,"tickwidth":0.66417600664176002,"showticklabels":true,"tickfont":{"color":"rgba(77,77,77,1)","family":"","size":11.68949771689498},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":true,"gridcolor":"rgba(255,255,255,1)","gridwidth":0.66417600664176002,"zeroline":false,"anchor":"x","title":{"text":"Annualized Cost [CHF/yr]","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}},"hoverformat":".2f"},"shapes":[{"type":"rect","fillcolor":null,"line":{"color":null,"width":0,"linetype":[]},"yref":"paper","xref":"paper","x0":0,"x1":1,"y0":0,"y1":1}],"showlegend":false,"legend":{"bgcolor":"rgba(255,255,255,1)","bordercolor":"transparent","borderwidth":1.8897637795275593,"font":{"color":"rgba(0,0,0,1)","family":"","size":11.68949771689498}},"hovermode":"closest","barmode":"relative"},"config":{"doubleClick":"reset","modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"source":"A","attrs":{"13b8b36848d00":{"x":{},"y":{},"type":"scatter"},"13b8b2db242f7":{"x":{},"y":{}}},"cur_data":"13b8b36848d00","visdat":{"13b8b36848d00":["function (y) ","x"],"13b8b2db242f7":["function (y) ","x"]},"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-Linear-HP-cost-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.3: Linearization of heat cost
+</figcaption>
+</figure>
+</div>
+</div>
+</section>
+<section id="milp-optimisation-of-the-epfl-energy-system" class="level2" data-number="5.4">
+<h2 data-number="5.4" class="anchored" data-anchor-id="milp-optimisation-of-the-epfl-energy-system"><span class="header-section-number">5.4</span> MILP optimisation of the EPFL energy system</h2>
+<p>A mixed integer linear programming (MILP) optimization problem is set up to determine the combination of technologies that will provide for the energy demand of the campus. <a href="#tbl-Nomenclature-1" class="quarto-xref">Table&nbsp;<span>5.1</span></a>, <a href="#tbl-Nomenclature-2" class="quarto-xref">and&nbsp;<span>5.2</span></a> provides details of all the sets, parameters and variables used in the MILP model.</p>
+<div class="cell">
+<div id="tbl-Nomenclature-1" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-Nomenclature-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5.1: Nomenclature of sets used for MILP model
+</figcaption>
+<div aria-describedby="tbl-Nomenclature-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-740bdb9874dfb83ba90e" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-740bdb9874dfb83ba90e">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Set":["T","B","LB","MB","TC","L","G","U","UT","UL","TL"],"Description":["Set of timesteps","Set of buildings","Set of low temperature buildings","Set of medium temperature buildings","Set of technologies","Set of layers (resources)","Set of grids","Set of utilities"," Set of utilities of a certain type (heating and/or electricity)","Set of utilities using a certain resource layer"," Set of temperature level"]},"columns":[{"id":"Set","name":"Set","type":"character","minWidth":60},{"id":"Description","name":"Description","type":"character","minWidth":250}],"sortable":false,"searchable":true,"defaultPageSize":6,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"772be3304f769b811b5806c895a35a70"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell">
+<div id="tbl-Nomenclature-2" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-Nomenclature-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5.2: Nomenclature of variables used for MILP model
+</figcaption>
+<div aria-describedby="tbl-Nomenclature-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-179a04dad7204a564927" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-179a04dad7204a564927">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Variable":["t<sup>op<\/sup>","C <span class=\"supsub\"><sup>op1<\/sup><sub>u,t<\/sub><\/span>","C <span class=\"supsub\"><sup>op2<\/sup><sub>u,t<\/sub><\/span>","C <span class=\"supsub\"><sup>inv1<\/sup><sub>TC<\/sub><\/span>","C <span class=\"supsub\"><sup>inv2<\/sup><sub>TC<\/sub><\/span>","f <span class=\"supsub\"><sup>min<\/sup><sub>u<\/sub><\/span>","f <span class=\"supsub\"><sup>max<\/sup><sub>u<\/sub><\/span>","q <span class=\"supsub\"><sup>hs<\/sup><sub>u<\/sub><\/span>","m <span class=\"supsub\"><sup>in<\/sup><sub>u<\/sub><\/span>","m <span class=\"supsub\"><sup>out<\/sup><sub>u<\/sub><\/span>","Q&#775;mt <span class=\"supsub\"><sup>-<\/sup><sub>t<\/sub><\/span>","Q&#775;lt <span class=\"supsub\"><sup>-<\/sup><sub>t<\/sub><\/span>","E&#775; <span class=\"supsub\"><sup>-<\/sup><sub>t<\/sub><\/span>","Q&#775; <span class=\"supsub\"><sup>heating<\/sup><sub>bt<\/sub><\/span>","E&#775; <sub>bt<\/sub>","w<sub>CAPEX<\/sub>","w<sub>OPEX<\/sub>","w<sub>ENVEX<\/sub>","&#x3B3;<sup>CO <span class=\"supsub\"><sup>+<\/sup><sub>2<\/sub><\/span><\/sup>","&#x3B5; <span class=\"supsub\"><sup>CO2<\/sup><sub>g<\/sub><\/span>","CAPEX","OPEX","ENVEX","y<sub>u<\/sub>","y<sub>u,t<\/sub>","f<sub>u<\/sub>","f<sub>u,t<\/sub>","h<sub>u,t,tl<\/sub>","CO <span class=\"supsub\"><sup>+<\/sup><sub>2<\/sub><\/span>"],"Description":["Number of hours in period [h]","Fixed operating costs [CHF/h]","Variable operating cost [CHF/h]","Fixed investment cost [CHF/year]","Variable investment cost [CHF/year]"," Minimum sizing factor [-]","Maximum sizing factor [-]","Reference heating supply from a utility [kW]","Reference flow into a utility [various]","Reference flow out of a utility [various]","Total heating demand at medium temperature level [kW]","Total heating demand at low temperature level [kW]","Total electricity demand [kW]","Heating demand of a building [kW]","Electricity demand of a building [kW]","Weight factor for CAPEX","Weight factor for OPEX","Weight factor for ENVEX","CO<sub>2<\/sub> tax [CHF/year]","CO<sub>2<\/sub> emissions [g/kWh]","Annualized capital cost [CHF/year]","Operating cost [CHF/year]","Environmental cost (CO<sub>2<\/sub> tax) [CHF/year]","Binary variable to install a technology or not [-]","Binary variable to use the utility in time t or not [-]","Sizing factor for technology installation [-]","Sizing factor of utility [-]","Sizing factor of a utility for heating at temperature level tl [-]","CO<sub>2<\/sub> [tons/kWh]"]},"columns":[{"id":"Variable","name":"Variable","type":"character","html":true,"minWidth":60},{"id":"Description","name":"Description","type":"character","html":true,"minWidth":250}],"sortable":false,"searchable":true,"defaultPageSize":10,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"6003a60c14fd17f3355a735a603bd804"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<section id="objective-function" class="level3" data-number="5.4.1">
+<h3 data-number="5.4.1" class="anchored" data-anchor-id="objective-function"><span class="header-section-number">5.4.1</span> Objective function</h3>
+<p>The objective function of the MILP problem is to minimize the total expenditure per year (TOTEX). TOTEX is defined by <a href="#eq-MILP-obj" class="quarto-xref">eq&nbsp;<span>5.1</span></a>:</p>
+<p><span id="eq-MILP-obj"><span class="math display">\[
+\mathrm{\min TOTEX = w_{CAPEX} \cdot CAPEX + w_{OPEX} \cdot OPEX + w_{ENVEX} \cdot ENVEX \ [\frac{CHF}{year}]}
+\tag{5.1}\]</span></span></p>
+</section>
+<section id="model-equations" class="level3" data-number="5.4.2">
+<h3 data-number="5.4.2" class="anchored" data-anchor-id="model-equations"><span class="header-section-number">5.4.2</span> Model equations</h3>
+<p>The equations used to set up the MILP model are defined below. For the description of variables used in the following equations, see <a href="#tbl-Nomenclature-1" class="quarto-xref">Table&nbsp;<span>5.1</span></a> and <a href="#tbl-Nomenclature-2" class="quarto-xref">Table&nbsp;<span>5.2</span></a>.</p>
+<ul>
+<li><strong>Building heating demand</strong> - The heating demand of each building is calculated using <a href="#eq-MILP-Qheating" class="quarto-xref">eq&nbsp;<span>5.2</span></a> <span id="eq-MILP-Qheating"><span class="math display">\[
+\mathrm{\dot{Q}_{b,t}^{heating} = A^{th}_{b} (U_{b}^{env}(T_{int} - T_{ext_t}) +  m_{air}C_{p,air}(T_{int} - T_{ext,new_{t}}) - k_b^{sun}\cdot I_t - \dot{Q}_b^{people} - f_{el}\dot{E}_b)}
+\tag{5.2}\]</span></span></li>
+</ul>
+<p>The total heating demand for each level in each time period given by <a href="#eq-MILP-QMT" class="quarto-xref">eq&nbsp;<span>5.3</span></a>, <a href="#eq-MILP-QLT" class="quarto-xref">eq&nbsp;<span>5.4</span></a>: <span id="eq-MILP-QMT"><span class="math display">\[
+\mathrm{\dot{Q}mt_t^- = \sum_b^{MB} \dot{Q}_{b,t}^{heating}}
+\tag{5.3}\]</span></span></p>
+<p><span id="eq-MILP-QLT"><span class="math display">\[
+\mathrm{\dot{Q}lt_t^- = \sum_b^{MB} \dot{Q}_{b,t}^{heating}}
+\tag{5.4}\]</span></span></p>
+<ul>
+<li><strong>Ventilation heat recovery</strong> - The amount of heat recovered from ventilation air is given by <a href="#eq-MILP-HeatVent" class="quarto-xref">eq&nbsp;<span>5.5</span></a>: <span id="eq-MILP-HeatVent"><span class="math display">\[
+\mathrm{Q_{vent} = \sum_b^B m_{air,out}C_{p_{air}}\cdot(T_{int}-T_{release_t})\cdot A_b^{th}}
+\tag{5.5}\]</span></span></li>
+</ul>
+<p>The heat exchanger area required for ventilation heat recovery is given by <a href="#eq-MILP-Area-Vent" class="quarto-xref">eq&nbsp;<span>5.6</span></a>. Note that, because the temperatures are imported from NLP part, only <span class="math inline">\(\mathrm{Q_{vent}}\)</span> is a variable in the equation and thus the equation acts as a linear equation. <span id="eq-MILP-Area-Vent"><span class="math display">\[
+\mathrm{A_{vent} \geq \frac{Q_{vent_t}}{U_{vent}\cdot \Delta T_{vent}}}
+\tag{5.6}\]</span></span></p>
+<ul>
+<li><p><strong>Ventilation heat pump</strong> - The amount of electrical energy required for heat pump is calculated using <a href="#eq-MILP-HP-elec" class="quarto-xref">eq&nbsp;<span>5.7</span></a>. The duty for condeser and evaporator of heat pump are calculated using <a href="02.00-Heat_recovery.html#eq-Q-Cond-HP" class="quarto-xref">eq&nbsp;<span>3.34</span></a> and <a href="02.00-Heat_recovery.html#eq-Q-evap-HP" class="quarto-xref">eq&nbsp;<span>3.35</span></a> respectively. <span id="eq-MILP-HP-elec"><span class="math display">\[
+\mathrm{E^{HP}_t = Q^{cond2}_t - Q_t^{evap}}
+\tag{5.7}\]</span></span></p></li>
+<li><p><strong>Sizing variables</strong> - The purchase size of utilities and the capacity at which they are used at any given time are related to the binary variable <strong>y</strong>, which determine the existence and whether or not a utility is installed at a given time, <a href="#eq-MILP-sizing1" class="quarto-xref">eq&nbsp;<span>5.8</span></a> and <a href="#eq-MILP-sizing2" class="quarto-xref">eq&nbsp;<span>5.9</span></a>. <a href="#eq-MILP-sizing3" class="quarto-xref">Eq&nbsp;<span>5.10</span></a> ensures that the usage of a utility does not exceed the installation size. <span id="eq-MILP-sizing1"><span class="math display">\[
+\mathrm{f_u^{min} \cdot y_u \leq f_u \leq f_u^{max} \cdot y_u}
+\tag{5.8}\]</span></span></p></li>
+</ul>
+<p><span id="eq-MILP-sizing2"><span class="math display">\[
+\mathrm{f_{u,t}^{min} \cdot y_{u,t} \leq f_{u,t} \leq f_{u,t}^{max} \cdot y_{u,t}}
+\tag{5.9}\]</span></span></p>
+<p><span id="eq-MILP-sizing3"><span class="math display">\[
+\mathrm{f_{u,t} \leq f_u}
+\tag{5.10}\]</span></span></p>
+<p>To ensure that the ventilation heat exchanger and heat pump are used for all time periods, in the AMPL model the above constraints are added with conditional statements and are valid as long as the utility under consideration is not heat pump or heat exchanger. For heat pump and heat exchanger, the sizing factors are simply equated to equipment size.</p>
+<ul>
+<li><strong>Heat balance</strong> - The heat balance equation for both the low and medium temperature network are given by <a href="#eq-MILP-LowT-Heat" class="quarto-xref">eq&nbsp;<span>5.11</span></a> and <a href="#eq-MILP-MedT-Heat" class="quarto-xref">eq&nbsp;<span>5.12</span></a> respectively.</li>
+</ul>
+<p><span id="eq-MILP-LowT-Heat"><span class="math display">\[
+\mathrm{\dot{Q}lt_t^- = \sum_u^{UT_{ty}} h_{u,t,tl} \cdot q_{u}^{hs} \hspace{1cm} \forall \ t \in \mathbf{T}, T_{mt} \leq T_u, \  ty = 'Heating'  }
+\tag{5.11}\]</span></span></p>
+<p><span id="eq-MILP-MedT-Heat"><span class="math display">\[
+\mathrm{\dot{Q}mt_t^- = \sum_u^{UT_{ty}} h_{u,t,tl} \cdot q_{u}^{hs} \hspace{1cm} \forall \ t \in \mathbf{T}, T_{mt} \leq T_u, \  ty = 'Heating'  }
+\tag{5.12}\]</span></span></p>
+<p>The size of utility is is then determined by summing up h over the set of temperature levels by using <a href="#eq-MILP-heating-mult" class="quarto-xref">eq&nbsp;<span>5.13</span></a> <span id="eq-MILP-heating-mult"><span class="math display">\[
+\mathrm{f_{u,t} = \sum^{TL} h_{u,t,tl} \hspace{1cm} \forall \ t \in \mathbf{T}, \ u \in U}
+\tag{5.13}\]</span></span></p>
+<ul>
+<li><strong>Resource balances</strong> - For the electricity and other resources (natural gas and hydrogen in this case), the electricity or fuel ﬂow in and out is calculated using <a href="#eq-MILP-flow-in" class="quarto-xref">eq&nbsp;<span>5.14</span></a> and <a href="#eq-MILP-flow-out" class="quarto-xref">eq&nbsp;<span>5.15</span></a> respectively.</li>
+</ul>
+<p><span id="eq-MILP-flow-in"><span class="math display">\[
+\mathrm{\dot{M}_{u,t}^{in} = f_{u,t} \cdot m_u^{in} \hspace{1cm} \forall \ t \in \mathbf{T}}
+\tag{5.14}\]</span></span></p>
+<p><span id="eq-MILP-flow-out"><span class="math display">\[
+\mathrm{\dot{M}_{u,t}^{out} = f_{u,t} \cdot m_u^{out} \hspace{1cm} \forall \ t \in \mathbf{T}}
+\tag{5.15}\]</span></span></p>
+<p>The balance for electricity and other resources is given by <a href="#eq-MILP-elec-balance" class="quarto-xref">eq&nbsp;<span>5.16</span></a>, <a href="#eq-MILP-resource-balance" class="quarto-xref">eq&nbsp;<span>5.17</span></a>. <span id="eq-MILP-elec-balance"><span class="math display">\[
+\mathrm{\dot{E}_t^- + \sum_u^{UL_l} \dot{M}_{u,t}^{in} = \sum_u^{UL_l} \dot{M}_{u,t}^{out} \hspace{1cm} \forall \ t \in \mathbf{T}; l = 'Electricity'}
+\tag{5.16}\]</span></span></p>
+<p><span id="eq-MILP-resource-balance"><span class="math display">\[
+\mathrm{\sum_u^{UL_l} \dot{M}_{u,t}^{in} = \sum_u^{UL_l} \dot{M}_{u,t}^{out} \hspace{1cm} \forall \ t \in \mathbf{T}; l \neq 'Electricity'}
+\tag{5.17}\]</span></span></p>
+<ul>
+<li><strong>Investment costs</strong> - The investment costs are given by <a href="#eq-MILP-CAPEX" class="quarto-xref">eq&nbsp;<span>5.18</span></a>. The investment costs are linearized for each technology and are summarized in <a href="#tbl-inv-cost-par" class="quarto-xref">Table&nbsp;<span>5.3</span></a> <span id="eq-MILP-CAPEX"><span class="math display">\[
+\mathrm{CAPEX = \sum_u^{TC} (C_{TC}^{inv1} \cdot y_u + C_{TC}^{inv2} \cdot f_u)}
+\tag{5.18}\]</span></span></li>
+</ul>
+<div class="cell">
+<div id="tbl-inv-cost-par" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-inv-cost-par-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5.3: Parameters to be used in <a href="#eq-MILP-CAPEX" class="quarto-xref">eq&nbsp;<span>5.18</span></a> for annualized CAPEX
+</figcaption>
+<div aria-describedby="tbl-inv-cost-par-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-6ddfecfac6da57413947" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-6ddfecfac6da57413947">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Technology":["Boiler","Cogeneration","Electric boiler","PV panels","SOFC","Vent Heat pump","Vent Heat exchanger"],"cinv1":[288.6196,767.7,435.9228,143.28,0,16825.9,51317.33],"cinv2":[79750,3200,75000,457.59,101886,195.5,14.33]},"columns":[{"id":"Technology","name":"Technology","type":"character","minWidth":200},{"id":"cinv1","name":"C<sup>inv1<\/sup>","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"html":true},{"id":"cinv2","name":"C<sup>inv2<\/sup>","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"html":true}],"highlight":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"79083dc33191cb1e25928fca406dac55"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<ul>
+<li><p><strong>Operational costs</strong> - The operational costs over the year are given by <a href="#eq-MILP-OPEX" class="quarto-xref">eq&nbsp;<span>5.19</span></a>. <span id="eq-MILP-OPEX"><span class="math display">\[
+\mathrm{OPEX = \sum_u^{U} \sum_{t=1}^T (C_{u,t}^{op1} \cdot y_{u,t} + C_{u,t}^{op2} \cdot f_{u,t}) \cdot t^{op}[t]}
+\tag{5.19}\]</span></span></p></li>
+<li><p><strong>Environmental costs</strong> - The environmental costs (CO<span class="math inline">\(_{2}\)</span> tax) is calculated using <a href="#eq-MILP-ENVEX" class="quarto-xref">eq&nbsp;<span>5.20</span></a> <span id="eq-MILP-ENVEX"><span class="math display">\[
+\mathrm{ENVEX = CO_2^+ \gamma^{CO_2^+}}
+\tag{5.20}\]</span></span></p></li>
+<li><p><strong>CO<span class="math inline">\(_{2}\)</span> emissions</strong> - The amount of CO<span class="math inline">\(_2\)</span> emitted during a year is given by <a href="#eq-MILP-CO2" class="quarto-xref">eq&nbsp;<span>5.21</span></a>. The value for parameter <span class="math inline">\(\epsilon_g^{CO_2}\)</span> is given in <a href="#tbl-emis-table" class="quarto-xref">Table&nbsp;<span>5.4</span></a>. <span id="eq-MILP-CO2"><span class="math display">\[
+\mathrm{CO_2^+ = \sum_g^G \sum_{t=1}^T f_{g,t} \cdot \epsilon_g^{CO_2}}
+\tag{5.21}\]</span></span></p></li>
+</ul>
+<div class="cell">
+<div id="tbl-emis-table" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-emis-table-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5.4: Carbon dioxide emissions associated with grids
+</figcaption>
+<div aria-describedby="tbl-emis-table-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-52321d1525d440d97c5a" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-52321d1525d440d97c5a">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Grid":["Electricity buy","Electricity sell","Hydrogen Grid","Natural gas"],"Value":[300,-300,0,430.6]},"columns":[{"id":"Grid","name":"Grid","type":"character","minWidth":150},{"id":"Value","name":"CO<sub>2<\/sub> emissions [g/kWh]","type":"numeric","minWidth":150,"html":true,"align":"center"}],"highlight":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"fa7e11438e82baeb254712b14d056091"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+<section id="sec-MILP-results" class="level3" data-number="5.4.3">
+<h3 data-number="5.4.3" class="anchored" data-anchor-id="sec-MILP-results"><span class="header-section-number">5.4.3</span> MILP results</h3>
+<p>This section presents the results for base case model. In the base case the weights associated with each cost element is set to 1 in <a href="#eq-MILP-obj" class="quarto-xref">eq&nbsp;<span>5.1</span></a>. <a href="#fig-MILP-heat-demand" class="quarto-xref">Figure&nbsp;<span>5.4</span></a> shows the heating demand for buildings for each typical period. As expected, the maximum heat demand is during the extreme period and it becomes lower when the temperature and irradiation is higher.</p>
+<div class="cell">
+<div id="fig-MILP-heat-demand" class="cell-output-display quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-MILP-heat-demand-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="plotly html-widget html-fill-item" id="htmlwidget-b3c403c7a90982dd5177" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-b3c403c7a90982dd5177">{"x":{"data":[{"orientation":"v","width":[0.44999999999999996,0.45000000000000018,0.45000000000000018,0.45000000000000018],"base":[0,0,0,0],"x":[0.77500000000000002,1.7749999999999999,2.7749999999999999,3.7749999999999999],"y":[0.050124752314623239,14.332400908461212,4.1873165581701315,28.493317514537587],"text":["Period: 1<br />Heating Demand: 0.05 MW<br />Temperature level: LowT","Period: 2<br />Heating Demand: 14.33 MW<br />Temperature level: LowT","Period: 3<br />Heating Demand: 4.19 MW<br />Temperature level: LowT","Period: 4<br />Heating Demand: 28.49 MW<br />Temperature level: LowT"],"type":"bar","textposition":"none","marker":{"autocolorscale":false,"color":"rgba(248,118,109,1)","line":{"width":1.8897637795275593,"color":"transparent"}},"name":"LowT","legendgroup":"LowT","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.45000000000000018,0.45000000000000018,0.45000000000000018,0.44999999999999973],"base":[0,0,0,0],"x":[1.2250000000000001,2.2250000000000001,3.2250000000000001,4.2249999999999996],"y":[0.17094417367256087,8.7256979620794706,2.1718174609230898,17.677162687186041],"text":["Period: 1<br />Heating Demand: 0.17 MW<br />Temperature level: MediumT","Period: 2<br />Heating Demand: 8.73 MW<br />Temperature level: MediumT","Period: 3<br />Heating Demand: 2.17 MW<br />Temperature level: MediumT","Period: 4<br />Heating Demand: 17.68 MW<br />Temperature level: MediumT"],"type":"bar","textposition":"none","marker":{"autocolorscale":false,"color":"rgba(0,191,196,1)","line":{"width":1.8897637795275593,"color":"transparent"}},"name":"MediumT","legendgroup":"MediumT","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null}],"layout":{"margin":{"t":26.228310502283104,"r":7.3059360730593621,"b":40.182648401826491,"l":37.260273972602747},"plot_bgcolor":"rgba(235,235,235,1)","paper_bgcolor":"rgba(255,255,255,1)","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724},"xaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[0.35500000000000009,4.6449999999999996],"tickmode":"array","ticktext":["1","2","3","4"],"tickvals":[1,2,3,4],"categoryorder":"array","categoryarray":["1","2","3","4"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.6529680365296811,"tickwidth":0.66417600664176002,"showticklabels":true,"tickfont":{"color":"rgba(77,77,77,1)","family":"","size":11.68949771689498},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":true,"gridcolor":"rgba(255,255,255,1)","gridwidth":0.66417600664176002,"zeroline":false,"anchor":"y","title":{"text":"Period","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}},"hoverformat":".2f"},"yaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[-1.4246658757268795,29.917983390264467],"tickmode":"array","ticktext":["0","10","20"],"tickvals":[0,10,20],"categoryorder":"array","categoryarray":["0","10","20"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.6529680365296811,"tickwidth":0.66417600664176002,"showticklabels":true,"tickfont":{"color":"rgba(77,77,77,1)","family":"","size":11.68949771689498},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":true,"gridcolor":"rgba(255,255,255,1)","gridwidth":0.66417600664176002,"zeroline":false,"anchor":"x","title":{"text":"Heating demand [MW]","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}},"hoverformat":".2f"},"shapes":[{"type":"rect","fillcolor":null,"line":{"color":null,"width":0,"linetype":[]},"yref":"paper","xref":"paper","x0":0,"x1":1,"y0":0,"y1":1}],"showlegend":true,"legend":{"bgcolor":"rgba(255,255,255,1)","bordercolor":"transparent","borderwidth":1.8897637795275593,"font":{"color":"rgba(0,0,0,1)","family":"","size":11.68949771689498},"title":{"text":"Temperature level","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}}},"hovermode":"closest","barmode":"relative"},"config":{"doubleClick":"reset","modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"source":"A","attrs":{"13b8b3ab2e284":{"x":{},"y":{},"fill":{},"text":{},"type":"bar"}},"cur_data":"13b8b3ab2e284","visdat":{"13b8b3ab2e284":["function (y) ","x"]},"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-MILP-heat-demand-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.4: Heating demand per period
+</figcaption>
+</figure>
+</div>
+</div>
+<p>The optimal cost for meeting the heating demand of EPFL campus with the installation of new technologies is 2 261 368 <span class="math inline">\(\frac{\mathrm{CHF}}{\mathrm{year}}\)</span>. The breakdown of TOTEX is:</p>
+<ul>
+<li><strong>Investment cost</strong> = 671 508 <span class="math inline">\(\frac{\mathrm{CHF}}{\mathrm{year}}\)</span>.</li>
+<li><strong>Operational cost</strong> = 1 585 234 <span class="math inline">\(\frac{\mathrm{CHF}}{\mathrm{year}}\)</span>.</li>
+<li><strong>Environment cost</strong> = 4 626 <span class="math inline">\(\frac{\mathrm{CHF}}{\mathrm{year}}\)</span>.</li>
+</ul>
+<p><a href="#tbl-Tech-base-case" class="quarto-xref">Table&nbsp;<span>5.5</span></a> lists the technologies considered for energy system along with their installed capacity and annualized costs. <a href="#fig-MILP-mult-t-bc" class="quarto-xref">Figure&nbsp;<span>5.5</span></a> shows the usage of each technology for each typical period.</p>
+<div class="cell">
+<div id="tbl-Tech-base-case" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-Tech-base-case-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5.5: Technologies selected by optimizer, their installed capacity and associated costs
+</figcaption>
+<div aria-describedby="tbl-Tech-base-case-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-9212e1964c48ca49cba4" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-9212e1964c48ca49cba4">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Technology":["Boiler","Cogeneration","Electric boiler","PV panel","SOFC","Vent heat pump","Vent heat exchanger"],"Factor":[1.30580988705407,1,2.31123813311829,0,0,956.516285183429,9364.45692604887],"Capacity":[13.0580988705407,10,23.1123813311829,0,0,0.956516285183429,9364.45692604887],"Units":["MW","MW","MW","MW","MW","MW","m<sup>2<\/sup>"],"cinv1":[104426.958092562,3967.7,173778.782783872,0,0,203824.83375336,185509.99775028]},"columns":[{"id":"Technology","name":"Technology","type":"character","html":true,"minWidth":120},{"id":"Factor","name":"Install technology","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"cell":["✔️ Yes","✔️ Yes","✔️ Yes","❌ No","❌ No","✔️ Yes","✔️ Yes"],"minWidth":100,"align":"center"},{"id":"Capacity","name":"Installed capacity","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"minWidth":100,"align":"center"},{"id":"Units","name":"Units","type":"character","html":true,"minWidth":100,"align":"center"},{"id":"cinv1","name":"Annualized cost [CHF/year]","type":"numeric","format":{"cell":{"digits":0},"aggregated":{"digits":0}},"minWidth":120,"align":"center"}],"resizable":true,"highlight":true,"outlined":true,"striped":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"1925bb058fff90b3ece97eb3105898ee"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell">
+<div id="fig-MILP-mult-t-bc" class="cell-output-display quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-MILP-mult-t-bc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="plotly html-widget html-fill-item" id="htmlwidget-b2d00c905ce7266590e0" style="width:100%;height:464px;"></div>
+<script type="application/json" data-for="htmlwidget-b2d00c905ce7266590e0">{"x":{"data":[{"orientation":"v","width":[0.89999999999999991,0.90000000000000013,0.90000000000000036,0.90000000000000036],"base":[0.22106892598718411,10,6.3591340190932213,33.112381331182945],"x":[1,2,3,4],"y":[0,13.058098870540679,0,13.058098870540682],"text":["Period: 1<br />Usage: 0 MW<br />Technology: Boiler","Period: 2<br />Usage: 13.06 MW<br />Technology: Boiler","Period: 3<br />Usage: 0 MW<br />Technology: Boiler","Period: 4<br />Usage: 13.06 MW<br />Technology: Boiler"],"type":"bar","textposition":"none","marker":{"autocolorscale":false,"color":"rgba(248,118,109,1)","line":{"width":1.8897637795275593,"color":"transparent"}},"name":"Boiler","legendgroup":"Boiler","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.89999999999999991,0.90000000000000013,0.90000000000000036,0.90000000000000036],"base":[0,0,0,23.112381331182949],"x":[1,2,3,4],"y":[0.22106892598718411,10,6.3591340190932213,9.9999999999999964],"text":["Period: 1<br />Usage: 0.22 MW<br />Technology: Cogeneration","Period: 2<br />Usage: 10 MW<br />Technology: Cogeneration","Period: 3<br />Usage: 6.36 MW<br />Technology: Cogeneration","Period: 4<br />Usage: 10 MW<br />Technology: Cogeneration"],"type":"bar","textposition":"none","marker":{"autocolorscale":false,"color":"rgba(0,186,56,1)","line":{"width":1.8897637795275593,"color":"transparent"}},"name":"Cogeneration","legendgroup":"Cogeneration","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null},{"orientation":"v","width":[0.89999999999999991,0.90000000000000013,0.90000000000000036,0.90000000000000036],"base":[0,0,0,0],"x":[1,2,3,4],"y":[0,0,0,23.112381331182949],"text":["Period: 1<br />Usage: 0 MW<br />Technology: EB","Period: 2<br />Usage: 0 MW<br />Technology: EB","Period: 3<br />Usage: 0 MW<br />Technology: EB","Period: 4<br />Usage: 23.11 MW<br />Technology: EB"],"type":"bar","textposition":"none","marker":{"autocolorscale":false,"color":"rgba(97,156,255,1)","line":{"width":1.8897637795275593,"color":"transparent"}},"name":"EB","legendgroup":"EB","showlegend":true,"xaxis":"x","yaxis":"y","hoverinfo":"text","frame":null}],"layout":{"margin":{"t":26.228310502283104,"r":7.3059360730593621,"b":40.182648401826491,"l":37.260273972602747},"plot_bgcolor":"rgba(235,235,235,1)","paper_bgcolor":"rgba(255,255,255,1)","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724},"xaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[0.35499999999999998,4.6450000000000005],"tickmode":"array","ticktext":["1","2","3","4"],"tickvals":[1,1.9999999999999998,3,4],"categoryorder":"array","categoryarray":["1","2","3","4"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.6529680365296811,"tickwidth":0.66417600664176002,"showticklabels":true,"tickfont":{"color":"rgba(77,77,77,1)","family":"","size":11.68949771689498},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":true,"gridcolor":"rgba(255,255,255,1)","gridwidth":0.66417600664176002,"zeroline":false,"anchor":"y","title":{"text":"Period","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}},"hoverformat":".2f"},"yaxis":{"domain":[0,1],"automargin":true,"type":"linear","autorange":false,"range":[-2.3085240100861815,48.479004211809809],"tickmode":"array","ticktext":["0","10","20","30","40"],"tickvals":[0,10,20,30,40],"categoryorder":"array","categoryarray":["0","10","20","30","40"],"nticks":null,"ticks":"outside","tickcolor":"rgba(51,51,51,1)","ticklen":3.6529680365296811,"tickwidth":0.66417600664176002,"showticklabels":true,"tickfont":{"color":"rgba(77,77,77,1)","family":"","size":11.68949771689498},"tickangle":-0,"showline":false,"linecolor":null,"linewidth":0,"showgrid":true,"gridcolor":"rgba(255,255,255,1)","gridwidth":0.66417600664176002,"zeroline":false,"anchor":"x","title":{"text":"Heating Demand [MW]","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}},"hoverformat":".2f"},"shapes":[{"type":"rect","fillcolor":null,"line":{"color":null,"width":0,"linetype":[]},"yref":"paper","xref":"paper","x0":0,"x1":1,"y0":0,"y1":1}],"showlegend":true,"legend":{"bgcolor":"rgba(255,255,255,1)","bordercolor":"transparent","borderwidth":1.8897637795275593,"font":{"color":"rgba(0,0,0,1)","family":"","size":11.68949771689498},"title":{"text":"Technology","font":{"color":"rgba(0,0,0,1)","family":"","size":14.611872146118724}}},"hovermode":"closest","barmode":"relative"},"config":{"doubleClick":"reset","modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"source":"A","attrs":{"13b8b1e8e5e8b":{"x":{},"y":{},"fill":{},"text":{},"type":"bar"}},"cur_data":"13b8b1e8e5e8b","visdat":{"13b8b1e8e5e8b":["function (y) ","x"]},"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.20000000000000001,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-MILP-mult-t-bc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.5: Contribution of different technologies to energy demand of campus for each typical period
+</figcaption>
+</figure>
+</div>
+</div>
+<p>A few remarks about the optimal solution are listed below:</p>
+<ul>
+<li>It is interesting to note that the PV panels are not included in the optimum solution. Possible reasoning for the exclusion of PV panels is the high investment costs associated with them.</li>
+<li>Solid oxide fuel cell is also not part of the optimal solution. This was expected as the initial investment associated with fuel cells is very high. Also, in the model the fuel cells are operated on hydrogen, which compared to natural gas is quite expensive.</li>
+<li>For cogeneration, maximum capacity has been selected by optimizer. This has to do with the fact that cogeneration is very effective technology and can provide both electrical and thermal energy. Looking at <a href="#fig-MILP-mult-t-bc" class="quarto-xref">Figure&nbsp;<span>5.5</span></a> we can see that cogeneration is used in all periods. For periods with low heating demand i.e.&nbsp;period 1 and 3 it is preferred over boiler, as it can provide electrical energy as well.</li>
+<li>The installed capacity of electrical boiler is the largest of all technologies considered. However, the EB are only for the extreme period (period 4), where the installed capacity of boiler and cogeneration unit is insufficient to meet the campus demands. Perhaps, if the maximum capacity of cogeneration and boiler units were higher, electric boiler will not even be part of optimal solution.</li>
+</ul>
+</section>
+</section>
+<section id="scenario-analysis" class="level2" data-number="5.5">
+<h2 data-number="5.5" class="anchored" data-anchor-id="scenario-analysis"><span class="header-section-number">5.5</span> Scenario analysis</h2>
+<p>A scenario analysis explores and evaluates the influence of possible future events and its implications on todays descisions. In this report, three potential futures will be examined using scenario analysis. For each scenario, the objective function within the MILP optimization model will be adjusted to appropriately reflect the varying priorities and outcomes.</p>
+<section id="scenario-1-minimize-operating-costs" class="level3" data-number="5.5.1">
+<h3 data-number="5.5.1" class="anchored" data-anchor-id="scenario-1-minimize-operating-costs"><span class="header-section-number">5.5.1</span> Scenario 1: Minimize operating costs</h3>
+<p>In this scenario, EPFL currently operates with a significant budget, allowing for substantial capital investments. However, projections suggest that this economic flexibility will be significantly reduced in the coming years due to a financial crisis. This anticipated shift necessitates a strategic approach to planning the future heating system of EPFL, with an emphasis on ensuring long-term operating costs are sufficiently low to support the institution’s economic sustainability.</p>
+<p>To reflect this scenario in the MILP model, the objective function is adjusted so that it minimizes the operating costs. This approach acknowledges that while short-term spending flexibility exists, it must be utilized to mitigate the impacts of future budgetary restrictions. <a href="#tbl-Tech-scen1" class="quarto-xref">Table&nbsp;<span>5.6</span></a> shows the technologies and their installed capacities. A boiler, a cogeneration engine and PV panels will be installed with the mentioned capacities. In this scenario, most of the heat capacity will come from the boiler, due to the fact that the unit cost of natural gas is quite low compared to other resources.</p>
+<div class="cell">
+<div id="tbl-Tech-scen1" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-Tech-scen1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5.6: Technologies selected by optimizer, their installed capacity and associated costs when the objective is to minimize OPEX
+</figcaption>
+<div aria-describedby="tbl-Tech-scen1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-693786eabe997683f7bc" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-693786eabe997683f7bc">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Technology":["Boiler","Cogeneration","Electric Boiler","PV","SOFC"],"Factor":[3.61704802017236,1,0,300.654334675,0],"Capacity":[36.1704802017236,10,0,0.901963004025,0],"Units":["MW","MW","MW","MW","MW"]},"columns":[{"id":"Technology","name":"Technology","type":"character","html":true,"minWidth":100},{"id":"Factor","name":"Install technology","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"cell":["✔️ Yes","✔️ Yes","❌ No","✔️ Yes","❌ No"],"minWidth":120,"align":"center"},{"id":"Capacity","name":"Installed capacity","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"align":"center"},{"id":"Units","name":"Units","type":"character","html":true,"minWidth":60,"align":"center"}],"resizable":true,"highlight":true,"outlined":true,"striped":true,"nowrap":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"949cc72c12a171314cae21e9aad5743e"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>Key performance indicators when trying to minimise the OPEX, are shown in <a href="#tbl-KPI-scen1" class="quarto-xref">Table&nbsp;<span>5.7</span></a>. Compared to results discussed in <a href="#sec-MILP-results" class="quarto-xref"><span>Section 5.4.3</span></a> ,both the CAPEX and ENVEX are higher, as the objective mainly prioritises minimization of operating costs.</p>
+<div class="cell">
+<div id="tbl-KPI-scen1" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-KPI-scen1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5.7: Key performance indicators when the objective is to minimize OPEX
+</figcaption>
+<div aria-describedby="tbl-KPI-scen1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-90b5c346c1554ea256aa" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-90b5c346c1554ea256aa">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"KPI":["CAPEX","OPEX","ENVEX","TOTEX","CO2 Emission"],"Value":[819770.42771632,1512488.47387555,5087.63013747706,2337346.53172935,40.83170254797],"Units":["CHF/year","CHF/year","CHF/year","CHF/year","tonnes CO<sub>2<\/sub>/year"]},"columns":[{"id":"KPI","name":"KPI","type":"character","html":true,"minWidth":140},{"id":"Value","name":"Value","type":"list","format":{"cell":{"digits":2,"separators":true},"aggregated":{"digits":2,"separators":true}},"minWidth":140},{"id":"Units","name":"Units","type":"character","html":true,"minWidth":100}],"sortable":false,"resizable":true,"highlight":true,"outlined":true,"striped":true,"nowrap":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"8d30972938d1277f7137b406c12afbcf"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+<section id="scenario-2-rising-natural-gas-prices-and-climate-protests" class="level3" data-number="5.5.2">
+<h3 data-number="5.5.2" class="anchored" data-anchor-id="scenario-2-rising-natural-gas-prices-and-climate-protests"><span class="header-section-number">5.5.2</span> Scenario 2: Rising natural gas prices and climate protests</h3>
+<p>The second scenario examines a future where the price of natural gas has significantly increased, making it a less economically viable heating source for EPFL. In addition, climate activists strongly advocate for a transition away from natural gas due to its environmental impact, urging institutions like EPFL to adopt more sustainable energy solutions. In response to these pressures, EPFL aims to minimize its reliance on natural gas, aligning with both economic and environmental goals.</p>
+<p>To reflect this scenario in the model, the objective function is adjusted to minimize the use of natural gas. This change not only addresses the financial implications of rising energy costs but also supports EPFL’s commitment to reducing its carbon footprint. By prioritizing alternative energy sources and optimizing the heating system, the model will identify strategies to limit natural gas consumption while maintaining operational efficiency.</p>
+<p>The objective function used for this optimisation is to minimize ENVEX, which is the cost related to the environmental impact of a utility. Here PV, cogeneration, SOFC and an electric boiler will be installed as indicated by <a href="#tbl-Tech-scen2" class="quarto-xref">Table&nbsp;<span>5.8</span></a>. Most of the heat will be provided from the electric boiler.</p>
+<div class="cell">
+<div id="tbl-Tech-scen2" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-Tech-scen2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5.8: Technologies selected by optimizer, their installed capacity and associated costs when the objective is to minimize ENVEX
+</figcaption>
+<div aria-describedby="tbl-Tech-scen2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-08aca511a6b28a9a1cbe" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-08aca511a6b28a9a1cbe">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Technology":["Boiler","Cogeneration","Electric Boiler","PV","SOFC"],"Factor":[0,0.800008380989425,2.5,300.654334675,159.197345483251],"Capacity":[0,8.00008380989425,25,0.901963004025,13.1703963918294],"Units":["MW","MW","MW","MW","MW"]},"columns":[{"id":"Technology","name":"Technology","type":"character","html":true,"minWidth":100},{"id":"Factor","name":"Install technology","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"cell":["❌ No","✔️ Yes","✔️ Yes","✔️ Yes","✔️ Yes"],"minWidth":100,"align":"center"},{"id":"Capacity","name":"Installed capacity","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"align":"center"},{"id":"Units","name":"Units","type":"character","html":true,"minWidth":60,"align":"center"}],"resizable":true,"highlight":true,"outlined":true,"striped":true,"nowrap":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"c152c0e6ab94f1ca9caaece01283c2fe"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p><a href="#tbl-KPI-scen2" class="quarto-xref">Table&nbsp;<span>5.9</span></a> shows the key performance indicators when the objective is to minimize environmental impact. Both the CAPEX and the OPEX are significantly larger in this case compared to scenario 1 and the ENVEX is about 1/5. This is reasonable since the objective function in this case does not prioritise the minimisation of the operational and investment costs.</p>
+<div class="cell">
+<div id="tbl-KPI-scen2" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-KPI-scen2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5.9: Key performance indicators when the objective is to minimize ENVEX
+</figcaption>
+<div aria-describedby="tbl-KPI-scen2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-ef0ff843d0ae1bd8ce3b" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-ef0ff843d0ae1bd8ce3b">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"KPI":["CAPEX","OPEX","ENVEX","TOTEX","CO2 Emission"],"Value":[16938298.9200333,6183326.28154524,1154.34994319142,23122779.5515217,9.2644457720018],"Units":["CHF/year","CHF/year","CHF/year","CHF/year","tonnes CO<sub>2<\/sub>/year"]},"columns":[{"id":"KPI","name":"KPI","type":"character","html":true,"minWidth":140},{"id":"Value","name":"Value","type":"list","format":{"cell":{"digits":2,"separators":true},"aggregated":{"digits":2,"separators":true}},"minWidth":140},{"id":"Units","name":"Units","type":"character","html":true,"minWidth":100}],"sortable":false,"resizable":true,"highlight":true,"outlined":true,"striped":true,"nowrap":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"fd1501f4e1446ae772dde11758659240"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+<section id="scenario-3-capital-investment-restrictions" class="level3" data-number="5.5.3">
+<h3 data-number="5.5.3" class="anchored" data-anchor-id="scenario-3-capital-investment-restrictions"><span class="header-section-number">5.5.3</span> Scenario 3: Capital investment restrictions</h3>
+<p>In the third scenario, EPFL faces severe financial limitations, making it difficult to allocate funds for large capital investments. As a result, the institution’s immediate focus shifts to minimizing the costs of installing new technologies, particularly those related to energy systems.</p>
+<p>To model this scenario in the AMPL model, the objective function is adjusted to minimize the capital expenditure associated with the installation of new technologies. This approach considers only affordable, lower-cost technologies that can be implemented with the available budget, while still delivering the required performance levels. When the CAPEX is minimized the optimal combination of utilities is a boiler, a cogeneration engine and a electrical boiler as shown in <a href="#tbl-Tech-scen3" class="quarto-xref">Table&nbsp;<span>5.10</span></a>. Compared to the case of minimization of OPEX, here the optimal solution excludes the use of PV panels, due to the high investment costs associated with PV panels</p>
+<div class="cell">
+<div id="tbl-Tech-scen3" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-Tech-scen3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5.10: Technologies selected by optimizer, their installed capacity and associated costs when the objective is to minimize CAPEX
+</figcaption>
+<div aria-describedby="tbl-Tech-scen3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-b2e8fd4d7a3448d26dce" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-b2e8fd4d7a3448d26dce">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Technology":["Boiler","Cogeneration","Electric Boiler","PV","SOFC"],"Factor":[1.11704802017236,1,2.5,0,0],"Capacity":[11.1704802017236,10,25,0,0],"Units":["MW","MW","MW","MW","kW"]},"columns":[{"id":"Technology","name":"Technology","type":"character","html":true,"minWidth":100},{"id":"Factor","name":"Install technology","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"cell":["✔️ Yes","✔️ Yes","✔️ Yes","❌ No","❌ No"],"minWidth":100,"align":"center"},{"id":"Capacity","name":"Installed capacity","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"align":"center"},{"id":"Units","name":"Units","type":"character","html":true,"minWidth":60,"align":"center"}],"sortable":false,"resizable":true,"highlight":true,"outlined":true,"striped":true,"nowrap":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"40c65eaacf6f16a476c3d306685681bd"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>The impact of this new objective function is clearly visible in <a href="#tbl-KPI-scen3" class="quarto-xref">Table&nbsp;<span>5.11</span></a>. By minimising the CAPEX, the OPEX gets quite large. Due to the current financial situation of this scenario, having larger budgets the following years is not necessarily realistic and the large operational costs may present a probelm.</p>
+<div class="cell">
+<div id="tbl-KPI-scen3" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-KPI-scen3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5.11: Key performance indicators when the objective is to minimize CAPEX
+</figcaption>
+<div aria-describedby="tbl-KPI-scen3-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-ae737ecf799b9245be37" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-ae737ecf799b9245be37">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"KPI":["CAPEX","OPEX","ENVEX","TOTEX","CO2 Emission"],"Value":[670611.653512386,1677449.20766189,4543.52267629276,2352604.38385057,36.4648689911136],"Units":["CHF/year","CHF/year","CHF/year","CHF/year","tonnes CO<sub>2<\/sub>/year"]},"columns":[{"id":"KPI","name":"KPI","type":"character","html":true,"minWidth":140},{"id":"Value","name":"Value","type":"list","format":{"cell":{"digits":2,"separators":true},"aggregated":{"digits":2,"separators":true}},"minWidth":140},{"id":"Units","name":"Units","type":"character","html":true,"minWidth":100}],"sortable":false,"resizable":true,"highlight":true,"outlined":true,"striped":true,"nowrap":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"de61f9c5d8c31f6b87ae2ddf264788a4"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+</section>
+<section id="multi-objective-optimization" class="level2" data-number="5.6">
+<h2 data-number="5.6" class="anchored" data-anchor-id="multi-objective-optimization"><span class="header-section-number">5.6</span> Multi-objective optimization</h2>
+<p>Multi-objective optimization enables the comparison of different objectives simultaneously, addressing the trade-offs inherent to real-world energy system design. In this project, the optimization aims to minimize investment costs (CAPEX) and CO2 emissions, represented by the carbon tax (ENVEX) using a value of 140 USD/ton <span class="citation" data-cites="IEA2024">International Energy Agency (IEA) (<a href="#ref-IEA2024" role="doc-biblioref">2024</a>)</span>.</p>
+<p>Since a solution minimizing both objectives is unattainable, the Pareto front identifies solutions where these objectives are optimally balanced. <a href="#fig-pareto-optimization" class="quarto-xref">Figure&nbsp;<span>5.6</span></a> illustrates this Pareto front, separating feasible and infeasible solutions.</p>
+<div id="fig-pareto-optimization" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pareto-optimization-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Figures/pareto_frontier.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pareto-optimization-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.6: Pareto front (trade-off environmental impact/investment costs)
+</figcaption>
+</figure>
+</div>
+<p>To assist decision-makers, we highlight three distinct Pareto-optimal solutions:</p>
+<ul>
+<li><strong>Option 1</strong>: Minimizing CAPEX</li>
+<li><strong>Option 2</strong>: Minimizing ENVEX</li>
+<li><strong>Option 3</strong>: A balanced trade-off between CAPEX and CO2 emissions</li>
+</ul>
+<p><a href="#tbl-moo-results" class="quarto-xref">Table&nbsp;<span>5.12</span></a> summarizes the key results for each option, including the objectives (CAPEX, OPEX, and ENVEX) and the multiplication factors for various utilities, reflecting their respective sizes.</p>
+<p>Key insights derived from the results:</p>
+<ol type="1">
+<li><strong>Decarbonization Influence</strong>:
+<ul>
+<li><p>Option 1 relies primarily on gas boilers and natural gas, reflecting minimal investment in decarbonization technologies.</p></li>
+<li><p>Options 2 and 3 progressively phase out gas boilers and natural gas, emphasizing hydrogen and renewable energy technologies.</p></li>
+</ul></li>
+<li><strong>Photovoltaic Panels and SOFC Deployment</strong>:
+<ul>
+<li>Option 2 heavily invests in PV panels and solid oxide fuel cells (SOFC) to reduce emissions, showcasing a costly but effective decarbonization strategy.<br>
+</li>
+<li>In contrast, Option 3 balances costs and emissions, maintaining cogeneration and a moderate SOFC size while only slightly introducing PV panel installation. <!-- 3.  **Ventilation Heat Recovery**:
+-   Ventilation heat recovery plays a critical role in both emission and costs reduction, as it remains the same in all options. --></li>
+</ul></li>
+</ol>
+<div class="cell">
+<div id="tbl-moo-results" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-moo-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5.12: Summary of Pareto-optimal solutions for CAPEX and CO2 emissions.
+</figcaption>
+<div aria-describedby="tbl-moo-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-e58ed46d6400620a24bd" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-e58ed46d6400620a24bd">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Option":["Option 1 (Min CAPEX)","Option 2 (Min ENVEX)","Option 3 (Trade-off)"],"ENVEX":[4223,147.3,798],"CAPEX":[670611,104759900,21488469],"OPEX":[2744629,6188139,64014550],"Boiler":[11.17,0,0],"Cogeneration":[10,0,0.43],"Electric_Boiler":[25,25,25],"PV_Panels":[0,15,0.9],"SOFC":[0,82.73,16.87692]},"columns":[{"id":"Option","name":"Option","type":"character","minWidth":120},{"id":"ENVEX","name":"ENVEX [CHF/year]","type":"numeric","minWidth":120,"format":{"cell":{"digits":0,"separators":true},"aggregated":{"digits":0,"separators":true}},"align":"center"},{"id":"CAPEX","name":"CAPEX [CHF/year]","type":"numeric","minWidth":120,"format":{"cell":{"digits":0,"separators":true},"aggregated":{"digits":0,"separators":true}},"align":"center"},{"id":"OPEX","name":"OPEX [CHF/year]","type":"numeric","minWidth":120,"format":{"cell":{"digits":0,"separators":true},"aggregated":{"digits":0,"separators":true}},"align":"center"},{"id":"Boiler","name":"Boiler [MW]","type":"numeric","minWidth":120,"format":{"cell":{"digits":2},"aggregated":{"digits":2}},"align":"center"},{"id":"Cogeneration","name":"Cogeneration [MW]","type":"numeric","minWidth":125,"format":{"cell":{"digits":2},"aggregated":{"digits":2}},"align":"center"},{"id":"Electric_Boiler","name":"Electric boiler [MW]","type":"numeric","minWidth":120,"format":{"cell":{"digits":2},"aggregated":{"digits":2}},"align":"center"},{"id":"PV_Panels","name":"PV panels [MW]","type":"numeric","minWidth":120,"format":{"cell":{"digits":2},"aggregated":{"digits":2}},"align":"center"},{"id":"SOFC","name":"SOFC [MW]","type":"numeric","minWidth":120,"format":{"cell":{"digits":2},"aggregated":{"digits":2}},"align":"center"}],"resizable":true,"highlight":true,"outlined":true,"striped":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"079a0c7a693490a6e684ef9ff4ac5f64"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+</section>
+<section id="sensitivity-analysis" class="level2" data-number="5.7">
+<h2 data-number="5.7" class="anchored" data-anchor-id="sensitivity-analysis"><span class="header-section-number">5.7</span> Sensitivity Analysis</h2>
+<p>This section presents the results of the sensitivity analysis performed to evaluate the impact of electricity price variations on the total cost of the energy system. Electricity prices were incrementally increased from the baseline value of 0.0916 CHF/kWh up to 0.2416 CHF/kWh in five steps. The total cost, which includes both investment and operational expenses, was calculated for each price level to assess how sensitive the system’s performance is to changes in electricity prices.</p>
+<p>The analysis reveals an interesting trend, as shown in <a href="#fig-sensitivity" class="quarto-xref">Figure&nbsp;<span>5.7</span></a>. At the baseline electricity price of 0.0916 CHF/kWh, the total cost of the system is 21.866 MCHF. However, as the price increases slightly to 0.1016 CHF/kWh, the total cost unexpectedly drops to 21.861 MCHF, reflecting an optimization shift in the system. This reduction suggests that the model adjusts its operational strategy —potentially by reducing reliance on grid electricity and utilizing more cost-effective technologies— to offset the increased electricity price.</p>
+<p>Beyond this point, the relationship between electricity price and total cost follows a clear upward trend. For instance, when the price is set to 0.1216 CHF/kWh, the total cost rises to 21.872 MCHF. This trend continues and the total cost peaks at 21.942 MCHF when the electricity price reaches the end of our range i.e.&nbsp;0.2416 CHF/kWh.</p>
+<div class="cell">
+<div class="cell-output-display">
+<div id="fig-sensitivity" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-sensitivity-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="Figures/sensi.png" class="img-fluid figure-img" style="width:100.0%">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-sensitivity-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5.7: Impact of electricity prices on annual total cost
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The results highlight two key observations:</p>
+<ol type="1">
+<li><strong>Initial Cost Reduction</strong>: The initial drop in total cost as electricity price increases suggests a system optimization to mitigate the effect of price changes. This could involve reduced grid electricity usage, increased utilization of alternative technologies, or a shift in operational parameters.</li>
+<li><strong>Gradual Cost Increase</strong>: Beyond the initial optimization, the total cost rises progressively with electricity price increments. This trend indicates that the capacity of the system to adapt its configuration diminishes as electricity prices continue to climb.</li>
+</ol>
+</section>
+<section id="summary-of-milp-optimization" class="level2" data-number="5.8">
+<h2 data-number="5.8" class="anchored" data-anchor-id="summary-of-milp-optimization"><span class="header-section-number">5.8</span> Summary of MILP optimization</h2>
+<p>To meet the future energy demands of the EPFL campus, various energy conversion technologies were reviewed, considering their environmental impact and sustainability. Technologies examined include boilers, cogeneration, electric boilers, fuel cells, and solar panels. These technologies were linearized in terms of cost and performance and integrated into a Mixed-Integer Linear Programming (MILP) model. Results from the heat recovery section (<a href="02.00-Heat_recovery.html" class="quarto-xref"><span>Chapter 3</span></a>) were also included.</p>
+<p>The MILP model determined the optimal combination of technologies to minimize total yearly costs (TOTEX). Different scenarios were analyzed, prioritizing either operational costs (OPEX),capital cost (CAPEX) or environmental impact (ENVEX). <a href="#tbl-KPI-comp" class="quarto-xref">Table&nbsp;<span>5.13</span></a> illustrates how these objectives affect different key performance indicators (KPIs). The KPIs are similar when minimizing TOTEX, OPEX, or capital costs (CAPEX). However, minimizing environmental impact reduces CO<span class="math inline">\(_2\)</span> emissions but significantly increases total costs due to the installation and use of advanced technologies like fuel cells.</p>
+<div class="cell">
+<div id="tbl-KPI-comp" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-KPI-comp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5.13: Summary of key performance indicator for the MILP model
+</figcaption>
+<div aria-describedby="tbl-KPI-comp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-7629e114b25c6c15a4c9" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-7629e114b25c6c15a4c9">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Objective":["min TOTEX","min OPEX","min ENVEX","min CAPEX"],"InvCost":[2261368.37893421,2337346.53172935,23122779.5515217,2352604.38385057],"InvCost.1":[671508.272380075,819770.42771632,16938298.9200333,670611.653512386],"OpCost":[1585234.07001782,1512488.47387555,6183326.28154524,1677449.20766189],"ENVEX":[4626.03653631323,5087.63013747706,1154.34994319142,4543.52267629276],"CO2":[37.1270990073293,40.83170254797,9.2644457720018,36.4648689911136]},"columns":[{"id":"Objective","name":"Objective","type":"character","style":{"fontWeight":"bold"}},{"id":"InvCost","name":"TOTEX [CHF/year]","type":"numeric","format":{"cell":{"digits":0,"separators":true},"aggregated":{"digits":0,"separators":true}},"align":"center"},{"id":"InvCost.1","name":"CAPEX [CHF/year]","type":"numeric","format":{"cell":{"digits":0,"separators":true},"aggregated":{"digits":0,"separators":true}},"align":"center"},{"id":"OpCost","name":"OPEX [CHF/year]","type":"numeric","format":{"cell":{"digits":0,"separators":true},"aggregated":{"digits":0,"separators":true}},"align":"center"},{"id":"ENVEX","name":"ENVEX [CHF/year]","type":"numeric","format":{"cell":{"digits":0,"separators":true},"aggregated":{"digits":0,"separators":true}},"align":"center"},{"id":"CO2","name":"CO<sub>2<\/sub> emissions [tonnes/year]","type":"numeric","format":{"cell":{"digits":2,"separators":true},"aggregated":{"digits":2,"separators":true}},"html":true,"minWidth":130,"align":"center"}],"outlined":true,"striped":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"cfd90491248465cc6ec6cbb79d01da94"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p><a href="#tbl-tech-cap-sum" class="quarto-xref">Table&nbsp;<span>5.14</span></a> summarizes the impact of changing objective on the selection of energy technologies and their installed capacities. It can be seen that cogeneration is always a part of optimal solution with different installed capacity, regardless of objective function. This is because cogeneration units are highly efficient and provide energy at the expense of low emissions and low cost. On the other end, SOFC are only preferred when the objective is to minimize the environmental impact, as was expected due to high investment as well as operational costs of fuel cells running on H<span class="math inline">\(_2\)</span>. Electric boilers are also favored in most cases except when the objective is to minimize the cost, due to relatively higher cost of electricity compared to natural gas.</p>
+<div class="cell">
+<div id="tbl-tech-cap-sum" class="cell quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-tech-cap-sum-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;5.14: Summary of optimum energy technologies and their installed capacities for different scenarios
+</figcaption>
+<div aria-describedby="tbl-tech-cap-sum-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div class="cell-output-display">
+<div class="reactable html-widget html-fill-item" id="htmlwidget-19db70cb5694839b19e4" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-19db70cb5694839b19e4">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"Scenario":["min TOTEX","min OPEX","min CAPEX","min ENVEX"],"Tech_USED":["Boiler, Cogeneration, EB","Boiler, Cogeneration, PV","Boiler, Cogeneration, EB","Cogeneration, EB, PV, SOFC"]},"columns":[{"id":"Scenario","name":"Scenario","type":"character","details":[{"name":"div","attribs":{"style":{"padding":"1rem"}},"children":[{"name":"Reactable","attribs":{"data":{"Technology":["Boiler","Cogeneration","EB","PV","SOFC"],"mult":[1.30580988705407,1,2.31123813311829,0,0],"Capacity":[13.0580988705407,10,23.1123813311829,0,0]},"columns":[{"id":"Technology","name":"Technology","type":"character"},{"id":"mult","name":"Install technology","type":"numeric","cell":["✔️ Yes","✔️ Yes","✔️ Yes","❌ No","❌ No"],"align":"center"},{"id":"Capacity","name":"Installed capacity [MW]","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"align":"center"}],"highlight":true,"outlined":true,"striped":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"45dcd3835f75e2235005cfd942e2b903","static":false,"nested":true},"children":[]}]},{"name":"div","attribs":{"style":{"padding":"1rem"}},"children":[{"name":"Reactable","attribs":{"data":{"Technology":["Boiler","Cogeneration","EB","PV","SOFC"],"mult":[3.61704802017236,1,0,300.654334675,0],"Capacity":[36.1704802017236,10,0,0.901963004025,0]},"columns":[{"id":"Technology","name":"Technology","type":"character"},{"id":"mult","name":"Install technology","type":"numeric","cell":["✔️ Yes","✔️ Yes","❌ No","✔️ Yes","❌ No"],"align":"center"},{"id":"Capacity","name":"Installed capacity [MW]","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"align":"center"}],"highlight":true,"outlined":true,"striped":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"c4e99433e1e5c78dffe47f5d6a354638","static":false,"nested":true},"children":[]}]},{"name":"div","attribs":{"style":{"padding":"1rem"}},"children":[{"name":"Reactable","attribs":{"data":{"Technology":["Boiler","Cogeneration","EB","PV","SOFC"],"mult":[1.11704802017236,1,2.5,0,0],"Capacity":[11.1704802017236,10,25,0,0]},"columns":[{"id":"Technology","name":"Technology","type":"character"},{"id":"mult","name":"Install technology","type":"numeric","cell":["✔️ Yes","✔️ Yes","✔️ Yes","❌ No","❌ No"],"align":"center"},{"id":"Capacity","name":"Installed capacity [MW]","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"align":"center"}],"highlight":true,"outlined":true,"striped":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"788b29de3f8a9d16de72519fc6a5d39b","static":false,"nested":true},"children":[]}]},{"name":"div","attribs":{"style":{"padding":"1rem"}},"children":[{"name":"Reactable","attribs":{"data":{"Technology":["Boiler","Cogeneration","EB","PV","SOFC"],"mult":[0,0.800008380989425,2.5,300.654334675,159.197345483251],"Capacity":[0,8.00008380989425,25,0.901963004025,13.1703963918294]},"columns":[{"id":"Technology","name":"Technology","type":"character"},{"id":"mult","name":"Install technology","type":"numeric","cell":["❌ No","✔️ Yes","✔️ Yes","✔️ Yes","✔️ Yes"],"align":"center"},{"id":"Capacity","name":"Installed capacity [MW]","type":"numeric","format":{"cell":{"digits":2},"aggregated":{"digits":2}},"align":"center"}],"highlight":true,"outlined":true,"striped":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"679eb930b17a621707e5a0d4bf12db7e","static":false,"nested":true},"children":[]}]}]},{"id":"Tech_USED","name":"Technologies Installed","type":"character"}],"highlight":true,"theme":{"color":"hsl(233, 9%, 15%)","backgroundColor":"white","borderColor":"hsl(233, 9%, 85%)","stripedColor":"hsl(210, 100%, 95%)","highlightColor":"hsl(210, 100%, 90%)","headerStyle":{"backgroundColor":"hsl(210, 100%, 50%)","color":"white"},"inputStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"selectStyle":{"backgroundColor":"hsl(0, 0%, 96%)"},"pageButtonHoverStyle":{"backgroundColor":"hsl(233, 9%, 25%)"},"pageButtonActiveStyle":{"backgroundColor":"hsl(233, 9%, 28%)"}},"dataKey":"717a78e02b151354d46a8e58df8dd395"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</figure>
+</div>
+</div>
+<p>For multi-objective optimization, a Pareto-front is used to compare the trade off between environmental costs and capital investment. Minimizing capital costs favored traditional technologies like boilers and cogeneration powered by natural gas. Conversely, minimizing environmental impact required significant investment in advanced technologies such as fuel cells and PV panels, which currently incur high costs. The analysis highlighted distinct optimal solutions: cost-efficient yet carbon-intensive options, and greener but more expensive alternatives, emphasizing the trade-offs in sustainable energy system design. The effect of electricity price on TOTEX is evaluated by sensitivity study. In general, with increasing electrical prices the annual total cost increased, but because of flexibility of system due to multiple technologies, the change in TOTEX is not too drastic.</p>
+
+
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-danish2019technology" class="csl-entry" role="listitem">
+Agency, Danish Energy. 2019. <span>“Technology Data: Generation of Electricity and District Heating.”</span> <em>Retrieved August 27th, 2019</em>.
+</div>
+<div id="ref-fixrEBcosts" class="csl-entry" role="listitem">
+Graham, Adam. 2022. <span>“How Much Does It Cost to Install an Electric Boiler?”</span> <a href="https://www.fixr.com/costs/electric-fired-boiler-system">https://www.fixr.com/costs/electric-fired-boiler-system</a>.
+</div>
+<div id="ref-IEA2024" class="csl-entry" role="listitem">
+International Energy Agency (IEA). 2024. <em>World Energy Outlook 2024</em>. Paris: IEA. <a href="https://www.iea.org/reports/world-energy-outlook-2024">https://www.iea.org/reports/world-energy-outlook-2024</a>.
+</div>
+<div id="ref-jiang2013modeling" class="csl-entry" role="listitem">
+Jiang, XS, ZX Jing, QH Wu, and TY Ji. 2013. <span>“Modeling of a Central Heating Electric Boiler Integrated with a Stand-Alone Wind Generator.”</span> <em>2013 IEEE PES Asia-Pacific Power and Energy Engineering Conference (APPEEC)</em>, 1–6.
+</div>
+<div id="ref-chp_eff" class="csl-entry" role="listitem">
+Ken Darrow, James Wang, Rick Tidball, and Anne Hampson. 2017. <span>“Catalog of CHP Technologies, Section 7. Packaged CHP Systems.”</span> <a href="https://www.epa.gov/sites/default/files/2017-09/documents/catalog-of-chp-technologies-section-7.pdf">https://www.epa.gov/sites/default/files/2017-09/documents/catalog-of-chp-technologies-section-7.pdf</a>.
+</div>
+<div id="ref-Pina2023" class="csl-entry" role="listitem">
+Pina, Eduardo Antonio, Berend van Veldhuizen, Francois Marechal, and Jan Van herle. 2023. <span>“A Comparative Techno-Economic Assessment of Alternative Fuels in SOFC Systems for Cruise Ships.”</span> <em>ECS Transactions</em> 111 (6). <a href="https://doi.org/10.1149/11106.2459ecst">https://doi.org/10.1149/11106.2459ecst</a>.
+</div>
+<div id="ref-Roy2024" class="csl-entry" role="listitem">
+Roy, Dibyendu, Samiran Samanta, Sumit Roy, Andrew Smallbone, and Anthony Paul Roskilly. 2024. <span>“Techno-Economic Analysis of Solid Oxide Fuel Cell-Based Energy Systems for Decarbonising Residential Power and Heat in the United Kingdom.”</span> <em>Green Chem.</em> 26. <a href="https://doi.org/10.1039/D3GC02645K">https://doi.org/10.1039/D3GC02645K</a>.
+</div>
+<div id="ref-soysal2016electric" class="csl-entry" role="listitem">
+Soysal, Emilie Rosenlund, Daniel Møller Sneum, Klaus Skytte, Ole Jess Olsen, and Eli Sandberg. 2016. <span>“Electric Boilers in District Heating Systems: A Comparative Study of the Scandinavian Market Conditions.”</span> <em>Swedish Association for Energy Economics Conference 2016</em>.
+</div>
+<div id="ref-Stadler2018" class="csl-entry" role="listitem">
+Stadler, Patrick, Lucas Girardin, Akram Ashouri, and François Maréchal. 2018. <span>“Contribution of Model Predictive Control in the Integration of Renewable Energy Sources Within the Built Environment.”</span> <em>Frontiers in Energy Research</em> 6: 22. <a href="https://doi.org/10.3389/fenrg.2018.00022">https://doi.org/10.3389/fenrg.2018.00022</a>.
+</div>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./03.00-HP_modeling.html" class="pagination-link" aria-label="Modelling of a heat pump and data reconciliation">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Modelling of a heat pump and data reconciliation</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./05-Conclusions.html" class="pagination-link" aria-label="Conclusions">
+        <span class="nav-page-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Conclusions</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
