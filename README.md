@@ -25,11 +25,11 @@ Please follow these steps:
 4.  **Open `index.html`:** Double-click on the `index.html` file within the `book` folder. This will open the project's main page in your default web browser, and you can then navigate through its sections.
 
 ## Key Features
-- **Energy Demand Assessment** --- Detailed calculation of campus heating demand. Clustering to identify typical periods.
-- **Heat Recovery Analysis** --- Evaluation of different heat recovery options using **AMPL**, including a detailed analysis of waste heat reclamation from ventilation air, demonstrating the potential for substantial reductions in campus heat load.
-- **Heat Pump Modeling** --- Modeling of two-stage heat pump using **VALI**, with working fluid (R-290) selection based on environmental impact and operational costs, where R-290 shows better performance and lower Global Warming Potential (GWP) compared to R-1234yf.
-- **Multi-Objective Optimization (MILP)** --- MILP to identify optimal combinations of various energy technologies such as **boilers, cogeneration, electric boilers, SOFC, PV panels** for campus-wide energy use, tailored to different budget and environmental priorities.
-- **Recommendations for Sustainability** --- Provide recommendations, including renovating existing buildings, installing heat recovery with heat pump integration for ventilation air, and specific technology installations based on defined economic or environmental scenarios.
+- **Energy Demand Assessment** - Detailed calculation of campus heating demand. Clustering to identify typical periods.
+- **Heat Recovery Analysis** - Evaluation of different heat recovery options using **AMPL**, including a detailed analysis of waste heat reclamation from ventilation air, demonstrating the potential for substantial reductions in campus heat load.
+- **Heat Pump Modeling** - Modeling of two-stage heat pump using **VALI**, with working fluid (R-290) selection based on environmental impact and operational costs, where R-290 shows better performance and lower Global Warming Potential (GWP) compared to R-1234yf.
+- **Multi-Objective Optimization (MILP)** - MILP to identify optimal combinations of various energy technologies such as **boilers, cogeneration, electric boilers, SOFC, PV panels** for campus-wide energy use, tailored to different budget and environmental priorities.
+- **Recommendations for Sustainability** - Provide recommendations, including renovating existing buildings, installing heat recovery with heat pump integration for ventilation air, and specific technology installations based on defined economic or environmental scenarios.
 
 ## Project Structure
 * `_book`: The output directory where the rendered HTML files are located.
